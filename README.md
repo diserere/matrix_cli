@@ -118,12 +118,10 @@ chmod +x matrix.sh
 
 - `matrix.sh --grayscale`
 
-<!-- ![matrix_gray_1.png](images/matrix_gray_1.png) -->
 ![matrix_gray_2.png](images/matrix_gray_2.png)
 
 - `matrix.sh --grayscale --binary --erase`
 
-<!-- ![matrix_gray_binary_1.png](images/matrix_gray_binary_1.png) -->
 ![matrix_gray_binary_2.png](images/matrix_gray_binary_2.png)
 
 - `matrix.sh --test`

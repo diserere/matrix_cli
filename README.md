@@ -1,17 +1,15 @@
-# Matrix Console Animation
-
+Matrix Console Animation
 ---
-
 Bash-скрипт, имитирующий визуализацию из фильма "Матрица" прямо в терминале.
 
-![Matrix Demo](https://img.shields.io/badge/Matrix-Animation-green)
+![Matrix Demo](images/animated_matrix_green_600px.gif)
 
 ## Особенности
 
-- 🎨 **Два цветовых режима**: классический зелёный и градиент серого
-- 🔢 **Режимы символов**: полный набор символов или двоичный (только 0 и 1)
-- 🧹 **Эффект стирания**: опциональное стирание хвостов колонок
-- 🎯 **Адаптивный размер**: автоматически подстраивается под размер терминала
+- **Два цветовых режима**: классический зелёный и градиент серого
+- **Режимы символов**: полный набор символов или двоичный (только 0 и 1)
+- **Эффект стирания**: опциональное стирание хвостов колонок
+- **Адаптивный размер**: автоматически подстраивается под размер терминала
 
 ## Установка
 
@@ -99,19 +97,36 @@ chmod +x matrix.sh
 
 ## Скриншоты
 
-```
-# Зелёный режим
- 1 0 1 0 1 0 1
-  A B C D E F G
-   7 8 9 @ # $ %
-     x y z X Y Z
+### Классический зелёный режим
+![Зелёный Matrix](images/animated_matrix_green_600px.gif)
 
-# Двоичный режим
- 1 0 1 0 1 0 1
-  0 1 0 1 0 1 0
-   1 0 1 0 1 0 1
-    0 1 0 1 0 1 0
-```
+### Двоичный режим (0 и 1), grayscale
+![Двоичный Matrix](images/animated_matrix_gray_600px.gif)
+
+
+
+### Сравнение режимов
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><img src="images/matrix_green.png" width="300"><br>matrix.sh</td>
+      <td align="center"><img src="images/matrix_green_binary.png" width="300"><br>matrix.sh -b</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="images/matrix_gray_1.png" width="300"><br>matrix.sh -g -e</td>
+      <td align="center"><img src="images/matrix_gray_2.png" width="300"><br>matrix.sh -g</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="images/matrix_gray_binary_1.png" width="300"><br>matrix.sh -g -b -e</td>
+      <td align="center"><img src="images/matrix_gray_binary_2.png" width="300"><br>matrix.sh -g -b</td>
+    </tr>
+    <tr>
+      <td align="center"><img src="images/matrix_color_test.png" width="300"><br>matrix.sh --test</td>
+      <td align="center"><img src="images/matrix_help.png" width="300"><br>matrix.sh --help</td>
+    </tr>
+  </table>
+</div>
+
 
 ## Лицензия
 

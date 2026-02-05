@@ -107,28 +107,30 @@ chmod +x matrix.sh
 ![Двоичный Matrix](images/animated_matrix_gray_600px.gif)
 
 
+### Примеры режимов
+- `matrix.sh`
 
-### Сравнение режимов
-<div align="center">
-  <table>
-    <tr>
-      <td align="center"><img src="images/matrix_green.png" width="300"><br>matrix.sh</td>
-      <td align="center"><img src="images/matrix_green_binary.png" width="300"><br>matrix.sh -b</td>
-    </tr>
-    <tr>
-      <td align="center"><img src="images/matrix_gray_1.png" width="300"><br>matrix.sh -g -e</td>
-      <td align="center"><img src="images/matrix_gray_2.png" width="300"><br>matrix.sh -g</td>
-    </tr>
-    <tr>
-      <td align="center"><img src="images/matrix_gray_binary_1.png" width="300"><br>matrix.sh -g -b -e</td>
-      <td align="center"><img src="images/matrix_gray_binary_2.png" width="300"><br>matrix.sh -g -b</td>
-    </tr>
-    <tr>
-      <td align="center"><img src="images/matrix_color_test.png" width="300"><br>matrix.sh --test</td>
-      <td align="center"><img src="images/matrix_help.png" width="300"><br>matrix.sh --help</td>
-    </tr>
-  </table>
-</div>
+![matrix_green.png](images/matrix_green.png)
+
+- `matrix.sh --binary --erase`
+
+![matrix_green_binary.png](images/matrix_green_binary.png)
+
+- `matrix.sh --grayscale`
+
+![matrix_gray_2.png](images/matrix_gray_2.png)
+
+- `matrix.sh --grayscale --binary --erase`
+
+![matrix_gray_binary_2.png](images/matrix_gray_binary_2.png)
+
+- `matrix.sh --test`
+
+![matrix_color_test.png](images/matrix_color_test.png)
+
+- `matrix.sh --help`
+
+![matrix_help.png](images/matrix_help.png)
 
 
 ## Лицензия

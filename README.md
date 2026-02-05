@@ -109,18 +109,29 @@ chmod +x matrix.sh
 
 ### Примеры режимов
 - `matrix.sh`
+
 ![matrix_green.png](images/matrix_green.png)
+
 - `matrix.sh --binary --erase`
+
 ![matrix_green_binary.png](images/matrix_green_binary.png)
+
 - `matrix.sh --grayscale`
+
 ![matrix_gray_1.png](images/matrix_gray_1.png)
 ![matrix_gray_2.png](images/matrix_gray_2.png)
+
 - `matrix.sh --grayscale --binary --erase`
+
 ![matrix_gray_binary_1.png](images/matrix_gray_binary_1.png)
 ![matrix_gray_binary_2.png](images/matrix_gray_binary_2.png)
+
 - `matrix.sh --test`
+
 ![matrix_color_test.png](images/matrix_color_test.png)
+
 - `matrix.sh --help`
+
 ![matrix_help.png](images/matrix_help.png)
 
 

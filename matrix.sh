@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 
-# Matrix-like console animation - ВЕРСИЯ 3.5.1
+# Matrix-like console animation - ВЕРСИЯ 3.5.2
 # Press Ctrl+C to exit
 
+
 # Конфигурация
-# CHARS="01"  # Упростим до 0 и 1 для настоящего Matrix стиля
-# CHARS="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()"  # Полный набор
 SPEED=0.05
+
+# Массивы для хранения данных колонок
+declare -a positions
+declare -a lengths
+declare -a speeds
 
 # Символы
 CHARS_FULL="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()"
@@ -21,19 +25,6 @@ FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
 TEST_COLORS=0     # 0 = обычный режим, 1 = режим тестирования цветов
 
 
-# # Цвета из 256-цветной палитры (зеленые оттенки)
-# # Градиенты: от самого светлого к самому темному
-# COLORS=(
-#     # "\033[38;5;15m"     # 0: Белый
-#     "\033[38;5;120m"    # 0: Очень яркий зеленый
-#     "\033[38;5;46m"     # 1: Яркий зеленый
-#     "\033[38;5;40m"     # 2: Зеленый
-#     "\033[38;5;34m"     # 3: Темно-зеленый
-#     "\033[38;5;28m"     # 4: Очень темный зеленый
-#     "\033[38;5;22m"     # 5: Самый темный зеленый
-# )
-# RESET="\033[0m"
-
 # Функция для очистки при выходе
 cleanup() {
     tput cnorm
@@ -42,7 +33,6 @@ cleanup() {
     echo -e "\n${COLORS[5]}Wake up Neo.${RESET}\n"
     exit 0
 }
-# trap cleanup EXIT INT TERM
 trap cleanup INT TERM
 
 # Тестируем цвета
@@ -50,13 +40,6 @@ test_colors() {
     init_colors
     echo
     echo -e "Тест цветов:"
-    # echo -e "${COLORS[0]}█ Очень яркий зеленый (120)"
-    # echo -e "${COLORS[1]}█ Яркий зеленый (46)"
-    # echo -e "${COLORS[2]}█ Зеленый (40)"
-    # echo -e "${COLORS[3]}█ Темно-зеленый (34)"
-    # echo -e "${COLORS[4]}█ Очень темный зеленый (28)"
-    # echo -e "${COLORS[5]}█ Самый темный зеленый (22)${RESET}"
-    # echo -e "${COLORS[0]}█ Самый яркий (120)"
     echo -e "${COLORS[0]}█ Самый яркий      [ \\${COLORS[0]} ]"
     echo -e "${COLORS[1]}█ Яркий            [ \\${COLORS[1]} ]"
     echo -e "${COLORS[2]}█ Обыный           [ \\${COLORS[2]} ]"
@@ -64,11 +47,9 @@ test_colors() {
     echo -e "${COLORS[4]}█ Очень темный     [ \\${COLORS[4]} ]"
     echo -e "${COLORS[5]}█ Самый темный     [ \\${COLORS[5]} ]${RESET}"
     echo
-    # sleep 3
-    # clear
 }
 
-# ИНИЦИАЛИЗАЦИЯ ЦВЕТОВ
+# Инициализация цветов
 init_colors() {
     if [ $GRAYSCALE_MODE -eq 1 ]; then
         # Оттенки серого (256 цветов)
@@ -100,19 +81,11 @@ init_colors() {
         )
         THEME_NAME="GREEN"
     fi
-    
-    # # Цвета для вспышек
-    # FLASH_COLORS=(
-    #     "\033[38;5;15m"     # Ярко-белый
-    #     "\033[38;5;51m"     # Голубой
-    #     "\033[38;5;226m"    # Желтый
-    #     "\033[1;31m"        # Красный
-    # )
-    
+    # Сброс цвета
     RESET="\033[0m"
 }
 
-# ИНИЦИАЛИЗАЦИЯ СИМВОЛОВ
+# Инициализация символов
 init_chars() {
     if [ $BINARY_MODE -eq 1 ]; then
         CHARS="$CHARS_BINARY"
@@ -124,7 +97,7 @@ init_chars() {
 }
 
 
-# ПАРСИНГ АРГУМЕНТОВ КОМАНДНОЙ СТРОКИ
+# Парсинг аргументов командной строки
 parse_args() {
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -141,8 +114,6 @@ parse_args() {
                 shift
                 ;;
             -t|--test)
-                # test_colors
-                # exit 0
                 TEST_COLORS=1
                 shift
                 ;;
@@ -168,17 +139,10 @@ show_help() {
     echo "  -e, --erase         Включить стирание хвоста колонок"
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
-    # echo "  -f, --flash       Включить эффект случайных вспышек"
-    # echo "  -s, --speed N     Установить скорость анимации (по умолчанию: 0.05)"
     echo "  -h, --help          Показать эту справку"
     echo ""
     echo "Управление:"
     echo "  Ctrl+C            Выход"
-    # echo "  Пробел            Пауза/продолжение"
-    # echo ""
-    # echo "Примеры:"
-    # echo "  $0 --binary --erase      # Двоичный Matrix со стиранием хвоста"
-    # echo "  $0 --grayscale --flash   # Серый Matrix со вспышками"
 }
 
 
@@ -266,11 +230,6 @@ do_matrix() {
     done
 }
 
-# Массивы для хранения данных колонок
-declare -a positions
-declare -a lengths
-declare -a speeds
-
 # Инициализация
 do_init() {
     WIDTH=$(tput cols)
@@ -281,7 +240,6 @@ do_init() {
 
     for ((i=0; i<WIDTH; i+=3)); do
         lengths[$i]=$(random_length)
-        # positions[$i]=-$((RANDOM % HEIGHT))
         positions[$i]=-$((RANDOM % lengths[$i]))
         speeds[$i]=$(random_speed)
     done

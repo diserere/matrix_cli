@@ -14,6 +14,9 @@ Bash-скрипт, имитирующий визуализацию из филь
 ## Установка
 
 ```bash
+# Скачать актуальную версию скрипта
+curl -O https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh
+
 # Сделать скрипт исполняемым
 chmod +x matrix.sh
 

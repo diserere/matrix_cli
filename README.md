@@ -2,7 +2,7 @@ Matrix Console Animation
 ---
 Bash-скрипт, имитирующий визуализацию из фильма "Матрица" прямо в терминале.
 
-[![Version](https://img.shields.io/badge/version-0.1.1-green.svg)](https://github.com/diserere/matrix_cli/releases)
+[![Version](https://img.shields.io/badge/version-0.1.2-green.svg)](https://github.com/diserere/matrix_cli/releases)
 
 
 ![Matrix Demo](images/animated_matrix_green_600px.gif)
@@ -49,6 +49,9 @@ chmod +x matrix.sh
 
 # Показать информацию о версии
 ./matrix.sh --version
+
+# Обновить до последней версии из Github repo
+./matrix.sh --update
 ```
 
 ### Параметры командной строки
@@ -61,6 +64,7 @@ chmod +x matrix.sh
 | `--test` | `-t` | Показать тестовую таблицу цветов и выйти |
 | `--help` | `-h` | Показать справку по использованию |
 | `--version` | `-v` | Показать информацию о версии |
+| `--update` | `-u` | Обновить до последней версии из Github repo |
 
 ## Управление
 
@@ -146,6 +150,10 @@ chmod +x matrix.sh
 - `matrix.sh --version`
 
 ![matrix_help.png](images/matrix_version.png)
+
+- `matrix.sh --update`
+
+![matrix_help.png](images/matrix_update.png)
 
 
 ## Лицензия

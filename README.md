@@ -46,6 +46,9 @@ chmod +x matrix.sh
 
 # Показать справку
 ./matrix.sh --help
+
+# Показать информацию о версии
+./matrix.sh --version
 ```
 
 ### Параметры командной строки
@@ -57,6 +60,7 @@ chmod +x matrix.sh
 | `--grayscale` | `-g` | Использовать оттенки серого вместо зелёного |
 | `--test` | `-t` | Показать тестовую таблицу цветов и выйти |
 | `--help` | `-h` | Показать справку по использованию |
+| `--version` | `-v` | Показать информацию о версии |
 
 ## Управление
 
@@ -138,6 +142,10 @@ chmod +x matrix.sh
 - `matrix.sh --help`
 
 ![matrix_help.png](images/matrix_help.png)
+
+- `matrix.sh --version`
+
+![matrix_help.png](images/matrix_version.png)
 
 
 ## Лицензия

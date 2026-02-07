@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.1.1
+# Version: 0.1.2
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,13 +9,14 @@
 
 
 # Version info
-VERSION="0.1.1"
+VERSION="0.1.2"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
 
 # Конфигурация
 SPEED=0.05
+UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
 
 # Массивы для хранения данных колонок
 declare -a positions
@@ -106,6 +107,57 @@ init_chars() {
     fi
 }
 
+# Проверка зависимостей
+check_dependencies() {
+    for dep in $1; do
+        # echo "Проверка наличия $dep..."
+        if ! command -v ${dep} &> /dev/null; then
+            echo "Ошибка: ${dep} не установлен" >&2
+            exit 1
+        fi
+    done
+}
+
+# Обновление скрипта
+update_script() {
+    local script_path="$0"
+    local backup_path="${script_path}.backup.$(date +%Y%m%d_%H%M%S)"
+    local temp_path="${script_path}.new"
+    
+    # Создаем backup
+    cp "${script_path}" "${backup_path}"
+    echo "Резервная копия создана: ${backup_path}"
+    
+    # Загружаем обновление
+    echo "Загрузка обновления с GitHub..."
+    
+    if curl -f -sS -L "${UPDATE_URL}" -o "${temp_path}" \
+        && [[ -s "${temp_path}" ]] \
+        && head -1 "${temp_path}" | grep -q "^#!"; then
+        
+        chmod +x "${temp_path}"
+        
+        # Тестовый запуск на синтаксис
+        if bash -n "${temp_path}"; then
+            mv "${temp_path}" "${script_path}"
+            echo "✅ Обновление успешно завершено!"
+            echo "Резервная копия сохранена в: ${backup_path}"
+            echo
+            echo "- new version info:"
+            echo
+            ${script_path} -v
+            return 0
+        else
+            echo "Ошибка: синтаксическая ошибка в новом скрипте" >&2
+            rm -f "${temp_path}"
+            return 1
+        fi
+    else
+        echo "Ошибка загрузки обновления" >&2
+        rm -f "${temp_path}"
+        return 1
+    fi
+}
 
 # Парсинг аргументов командной строки
 parse_args() {
@@ -135,6 +187,17 @@ parse_args() {
                 show_version
                 exit 0
                 ;;
+            -u|--update)
+                check_dependencies "curl"
+                echo "Вы уверены, что хотите обновить скрипт до последней версии? [y/N]"
+                read -r response
+                if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+                    update_script
+                else
+                    echo "Обновление отменено"
+                fi
+                exit 0
+                ;;
             *)
                 echo "Неизвестный аргумент: $1"
                 show_help
@@ -154,6 +217,7 @@ show_help() {
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
     echo "  -v, --version       Show version information"
+    echo "  -u, --update        Обновить до последней версии из Github repo"
     echo "  -h, --help          Показать эту справку"
     echo ""
     echo "Управление:"
@@ -185,6 +249,9 @@ random_length() {
 
 # Основной цикл анимации
 do_matrix() {
+
+    check_dependencies "tput"
+
     while true; do
         for ((i=0; i<WIDTH; i+=3)); do
             # Двигаем колонку вниз

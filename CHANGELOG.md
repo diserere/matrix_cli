@@ -6,17 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### [Unreleased]
 
-<!-- ### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security -->
-
-### Planned
+<!-- #### Added
+#### Changed
+#### Deprecated
+#### Removed
+#### Fixed
+#### Security -->
+#### Planned
 - Refactor rendering to improve performance
 - Add animation speed control
 - Add terminal resize handling
+
+### [0.1.2] (2026-02-07)
+- Added
+  - Update option with `-u, --update` flag
 
 ### [0.1.1] (2026-02-07)
 - Added
@@ -35,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Help text with `-h, --help` flag
 
 
-[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.2
 [0.1.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.1
 [0.1.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.0

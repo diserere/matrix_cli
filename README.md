@@ -2,6 +2,9 @@ Matrix Console Animation
 ---
 Bash-скрипт, имитирующий визуализацию из фильма "Матрица" прямо в терминале.
 
+[![Version](https://img.shields.io/badge/version-0.1.1-green.svg)](https://github.com/diserere/matrix_cli/releases)
+
+
 ![Matrix Demo](images/animated_matrix_green_600px.gif)
 
 ## Особенности
@@ -78,9 +81,13 @@ chmod +x matrix.sh
 
 Протестировано на:
 - Ubuntu/Debian (bash 5.0+)
-<!-- - macOS (bash 3.2+ с установленным `coreutils`)
-- Windows WSL/WSL2
-- Termux (Android) -->
+- macOS (bash 3.2+ с установленным `coreutils`)
+- Termux (Android)
+  - Требует установки пакета `ncurses-utils` из-за зависимости от `tput`:
+    ```
+    pkg update && pkg upgrade && pkg install ncurses-utils
+    ``` 
+<!-- - Windows WSL/WSL2 -->
 
 ## Примеры использования
 
@@ -151,7 +158,12 @@ MIT License. Смотрите файл LICENSE для подробностей.
 
 - Братьям Вачовски за вдохновение
 - Сообществу Linux за прекрасные инструменты
+- Большой нейросетевой модели DEEPSEEK за помощь и консультации
 - Всем тестерам и контрибьюторам
+
+## Список изменений
+
+Подробную информацию об изменениях в каждой версии см. в файле [CHANGELOG.md](CHANGELOG.md).
 
 ---
 

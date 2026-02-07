@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
-# Matrix-like console animation - ВЕРСИЯ 3.5.2
+# Matrix CLI - Matrix-like console animation
+# Version: 0.1.1
+# Author: diserere
+# GitHub: https://github.com/diserere/matrix_cli
+
 # Press Ctrl+C to exit
+
+
+# Version info
+VERSION="0.1.1"
+AUTHOR="diserere"
+REPO_URL="https://github.com/diserere/matrix_cli"
 
 
 # Конфигурация
@@ -121,6 +131,10 @@ parse_args() {
                 show_help
                 exit 0
                 ;;
+            -v|--version)
+                show_version
+                exit 0
+                ;;
             *)
                 echo "Неизвестный аргумент: $1"
                 show_help
@@ -139,10 +153,23 @@ show_help() {
     echo "  -e, --erase         Включить стирание хвоста колонок"
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
+    echo "  -v, --version       Show version information"
     echo "  -h, --help          Показать эту справку"
     echo ""
     echo "Управление:"
     echo "  Ctrl+C            Выход"
+}
+
+# Показать версию
+show_version() {
+    cat << EOF
+Matrix CLI v${VERSION}
+A terminal simulation of The Matrix digital rain animation
+
+Author: ${AUTHOR}
+Repository: ${REPO_URL}
+License: MIT
+EOF
 }
 
 

@@ -15,8 +15,9 @@ REPO_URL="https://github.com/diserere/matrix_cli"
 
 
 # Конфигурация
-DELAY=0.1
+DELAY=
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
+FPS_LOG_FILE=/tmp/matrix_fps.log
 
 # Массивы для хранения данных колонок
 declare -a positions
@@ -34,6 +35,7 @@ ERASE_MODE=0       # 0 = не стирать хвост, 1 = стирать
 GRAYSCALE_MODE=0   # 0 = зеленый, 1 = оттенки серого
 FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
 TEST_COLORS=0     # 0 = обычный режим, 1 = режим тестирования цветов
+TEST_FPS=0     # 0 = обычный режим, 1 = режим тестирования цветов
 
 
 # Функция для очистки при выходе
@@ -179,6 +181,19 @@ parse_args() {
                 TEST_COLORS=1
                 shift
                 ;;
+            -f|--fps)
+                TEST_FPS=1
+                shift
+                ;;
+            -d|--delay)
+                if [[ -n "$2" && "$2" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                    DELAY="$2"
+                    shift 2
+                else
+                    echo "Ошибка: --speed требует числового значения"
+                    exit 1
+                fi
+                ;;
             -h|--help)
                 show_help
                 exit 0
@@ -216,6 +231,8 @@ show_help() {
     echo "  -e, --erase         Включить стирание хвоста колонок"
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
+    echo "  -f, --fps           замер производительности FPS (лог-файл ${FPS_LOG_FILE})"
+    echo "  -d, --delay s[.ss]  Задержка в секундах при выводе буфера кадра"
     echo "  -v, --version       Show version information"
     echo "  -u, --update        Обновить до последней версии из Github repo"
     echo "  -h, --help          Показать эту справку"
@@ -247,14 +264,12 @@ random_length() {
     echo -n $((10 + RANDOM % 12))
 }
 
-# Основной цикл анимации
+# Основной цикл анимации (оптимизированная версия)
 do_matrix() {
-
     check_dependencies "tput"
 
     # Массив для символов в колонках
     local -a char_buffer
-    # Массив для цветовых кодов (храним индексы цветов из COLORS)
     local -a color_buffer
     local buffer_size=$((WIDTH * HEIGHT))
     
@@ -263,17 +278,34 @@ do_matrix() {
         char_buffer[idx]=" "
         color_buffer[idx]=5
     done
-
-    # Каунтеры FPS
-    local frame_count=0
-    local start_time=$SECONDS
-    local FPS_LOG_FILE=/tmp/matrix_fps.log
-
-    echo "Frame size (W * H): ${WIDTH} * ${HEIGHT}" > "${FPS_LOG_FILE}"
-
-    # Fraame loop
-    while true; do
     
+    # --- ИНИЦИАЛИЗАЦИЯ СТАТИСТИКИ ---
+    if (( TEST_FPS == 1 )); then
+        local frame_count=0
+        local start_time=$SECONDS
+        
+        echo "Matrix CLI Performance Test" > "$FPS_LOG_FILE"
+        {
+            echo "Screen: ${width}x${height}, Step: ${columns_step}" >> "$FPS_LOG_FILE"
+            echo "Buffer size: $buffer_size cells" >> "$FPS_LOG_FILE"
+            echo "Delay: ${DELAY}s" >> "$FPS_LOG_FILE"
+            echo "----------------------------------------"
+        } >> "$FPS_LOG_FILE"
+    fi
+    
+    # --- ГЛАВНЫЙ ЦИКЛ АНИМАЦИИ ---
+    
+    while true; do
+        # Засекаем время начала кадра (для точных замеров)
+        if (( TEST_FPS == 1 )); then
+            local frame_start_time
+            if (( frame_count % 50 == 0 )); then
+                frame_start_time=$(date +%s%N)
+            fi
+        fi
+        
+        # # ОБНОВЛЕНИЕ ПОЗИЦИЙ КОЛОНОК И БУФЕРА
+        # for ((i=0; i<width; i+=columns_step)); do
         # Обновление положения колонок в буфере кадра
         for ((i=0; i<WIDTH; i+=3)); do
             # Двигаем колонку вниз
@@ -345,8 +377,7 @@ do_matrix() {
         # Вывод кадра
         local frame_buffer=""
         local line_buffer
-        # for ((row=0; row<HEIGHT; row++)); do
-        for ((row=0; row<HEIGHT-1; row++)); do
+        for ((row=0; row<HEIGHT; row++)); do
             line_buffer=""
             for ((col=0; col<WIDTH; col++)); do
                 idx=$((row * WIDTH + col))
@@ -354,22 +385,45 @@ do_matrix() {
             done
             frame_buffer+="${line_buffer}\n"
         done
-        # clear
+        
+        # ВЫВОД КАДРА НА ЭКРАН
+        # ОПТИМИЗАЦИЯ: tput cup быстрее чем clear
         tput cup 0 0 2>/dev/null
         echo -en "$frame_buffer"
+        
+        # --- СТАТИСТИКА И ЗАДЕРЖКА ---
 
-        # Небольшая задержка
-        sleep $DELAY
-
-        # Подсчет FPS
-        ((frame_count++))
-        if (( frame_count % 100 == 0 )); then
-            local elapsed=$((SECONDS - start_time))
-            local fps=$((frame_count / (elapsed > 0 ? elapsed : 1)))
-            # Выводим в угол экрана или файл
-            echo "elapsed (s): ${elapsed} FPS: $fps" >> "${FPS_LOG_FILE}"
+        if ((TEST_FPS == 1)); then
+            # СБОР СТАТИСТИКИ ПРОИЗВОДИТЕЛЬНОСТИ
+            ((frame_count++))
+            
+            # Каждые 50 кадров записываем точное время отрисовки
+            if (( frame_count % 50 == 0 )); then
+                local frame_end_time=$(date +%s%N)
+                local frame_time_ns=$((frame_end_time - frame_start_time))
+                local frame_time_ms=$((frame_time_ns / 1000000))
+                
+                local elapsed_total=$((SECONDS - start_time))
+                local fps=$((frame_count / (elapsed_total > 0 ? elapsed_total : 1)))
+                
+                # Записываем в лог
+                echo "Frame: $frame_count, Buffer build: ~${frame_time_ms}ms, FPS: $fps" >> "$FPS_LOG_FILE"
+                
+            fi
+                # ОПЦИОНАЛЬНО: выводим FPS в углу экрана
+                tput cup 0 0 2>/dev/null
+                echo -ne "${COLOR_STRINGS[0]}${fps} fps "
+            
+            # Автоматический выход после N кадров (для бенчмарков)
+            # if (( frame_count >= 500 )); then
+            #     echo "Benchmark complete: ${fps} FPS average" >> "$FPS_LOG_FILE"
+            #     cleanup
+            # fi
         fi
 
+        if [ -n "${DELAY}" ]; then
+            sleep $DELAY
+        fi
     done
 }
 
@@ -378,7 +432,8 @@ do_init() {
     # WIDTH=80
     # HEIGHT=24
     WIDTH=$(tput cols)
-    HEIGHT=$(tput lines)
+    # HEIGHT=$(tput lines)
+    HEIGHT=$(($(tput lines) - 1))
 
     init_chars
     init_colors

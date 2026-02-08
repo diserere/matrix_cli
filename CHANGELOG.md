@@ -17,6 +17,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add animation speed control
 - Add terminal resize handling
 
+### [0.2.0] (2026-02-08)
+- Changed
+  - Fully refactored rendering: use buffered output instead of per-symbol refresh.
+  Achieve 10-30x speedup: ~25 FPS at 80x24, ~5 FPS at 238×65 (Gnome terminal in full-screen mode on FullHD display)
+- Added
+  - FPS benchmarking mode with `-f, --fps` flag
+  - Framerate delay option for small screen sizes with `-d, --delay` flag
+
 ### [0.1.2] (2026-02-07)
 - Added
   - Update option with `-u, --update` flag
@@ -38,7 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Help text with `-h, --help` flag
 
 
-[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.2.0
 [0.1.2]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.2
 [0.1.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.1
 [0.1.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.0

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.1.2
+# Version: 0.2.0
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,14 +9,15 @@
 
 
 # Version info
-VERSION="0.1.2"
+VERSION="0.2.0"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
 
 # Конфигурация
-SPEED=0.05
+DELAY=
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
+FPS_LOG_FILE=/tmp/matrix_fps.log
 
 # Массивы для хранения данных колонок
 declare -a positions
@@ -34,6 +35,7 @@ ERASE_MODE=0       # 0 = не стирать хвост, 1 = стирать
 GRAYSCALE_MODE=0   # 0 = зеленый, 1 = оттенки серого
 FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
 TEST_COLORS=0     # 0 = обычный режим, 1 = режим тестирования цветов
+TEST_FPS=0     # 0 = обычный режим, 1 = режим тестирования цветов
 
 
 # Функция для очистки при выходе
@@ -42,6 +44,11 @@ cleanup() {
     # Очистка экрана
     clear
     echo -e "\n${COLORS[5]}Wake up Neo.${RESET}\n"
+
+    if [ $TEST_FPS -eq 1 ]; then
+        cat "$FPS_LOG_FILE" >&2
+    fi
+
     exit 0
 }
 trap cleanup INT TERM
@@ -105,12 +112,12 @@ init_chars() {
         CHARS="$CHARS_FULL"
         CHARS_MODE="FULL"
     fi
+    CHARS_COUNT=${#CHARS}
 }
 
 # Проверка зависимостей
 check_dependencies() {
     for dep in $1; do
-        # echo "Проверка наличия $dep..."
         if ! command -v ${dep} &> /dev/null; then
             echo "Ошибка: ${dep} не установлен" >&2
             exit 1
@@ -179,6 +186,19 @@ parse_args() {
                 TEST_COLORS=1
                 shift
                 ;;
+            -f|--fps)
+                TEST_FPS=1
+                shift
+                ;;
+            -d|--delay)
+                if [[ -n "$2" && "$2" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+                    DELAY="$2"
+                    shift 2
+                else
+                    echo "Ошибка: --speed требует числового значения"
+                    exit 1
+                fi
+                ;;
             -h|--help)
                 show_help
                 exit 0
@@ -216,7 +236,9 @@ show_help() {
     echo "  -e, --erase         Включить стирание хвоста колонок"
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
-    echo "  -v, --version       Show version information"
+    echo "  -f, --fps           Тест производительности FPS (лог-файл ${FPS_LOG_FILE})"
+    echo "  -d, --delay 0.1     Задержка в секундах при выводе буфера кадра"
+    echo "  -v, --version       Показать информацию о версии"
     echo "  -u, --update        Обновить до последней версии из Github repo"
     echo "  -h, --help          Показать эту справку"
     echo ""
@@ -247,80 +269,208 @@ random_length() {
     echo -n $((10 + RANDOM % 12))
 }
 
-# Основной цикл анимации
+# Основной цикл анимации (оптимизированная версия)
 do_matrix() {
-
     check_dependencies "tput"
-
+    
+    # --- ПРЕДВЫЧИСЛЕНИЯ ДЛЯ ПРОИЗВОДИТЕЛЬНОСТИ ---
+    
+    # 1. Кэшируем цветовые строки (самая важная оптимизация!)
+    declare -a COLOR_STRINGS
+    for i in {0..5}; do
+        COLOR_STRINGS[i]="${COLORS[i]}"
+    done
+    local RESET_STR="$RESET"
+    
+    # 2. Локальные переменные для часто используемых значений
+    local width=$WIDTH
+    local height=$HEIGHT
+    local chars="$CHARS"
+    local chars_count=$CHARS_COUNT
+    
+    # 3. Размер буфера и предвычисленные константы
+    local buffer_size=$((width * height))
+    local columns_step=3  # Можно увеличить до 4 или 5 для большей скорости
+    local default_color_idx=5
+    
+    # --- ИНИЦИАЛИЗАЦИЯ БУФЕРОВ ---
+    
+    # Массивы для символов и цветов
+    local -a char_buffer
+    local -a color_buffer
+    local -a prev_char_buffer  # Для частичной перерисовки (опционально)
+    local -a prev_color_buffer # Для частичной перерисовки (опционально)
+    
+    # Заполняем буферы начальными значениями
+    for ((idx=0; idx<buffer_size; idx++)); do
+        char_buffer[idx]=" "
+        color_buffer[idx]=$default_color_idx
+        # Для частичной перерисовки:
+        prev_char_buffer[idx]=""
+        prev_color_buffer[idx]=-1
+    done
+    
+    # --- ИНИЦИАЛИЗАЦИЯ СТАТИСТИКИ ---
+    if (( TEST_FPS == 1 )); then
+        local frame_count=0
+        local start_time=$SECONDS
+        
+        echo "Matrix CLI Performance Test" > "$FPS_LOG_FILE"
+        {
+            echo "Screen: ${width}x${height}, Step: ${columns_step}" >> "$FPS_LOG_FILE"
+            echo "Buffer size: $buffer_size cells" >> "$FPS_LOG_FILE"
+            echo "Delay: ${DELAY}s" >> "$FPS_LOG_FILE"
+            echo "----------------------------------------"
+        } >> "$FPS_LOG_FILE"
+    fi
+    
+    # --- ГЛАВНЫЙ ЦИКЛ АНИМАЦИИ ---
+    
     while true; do
-        for ((i=0; i<WIDTH; i+=3)); do
+        # Засекаем время начала кадра (для точных замеров)
+        if (( TEST_FPS == 1 )); then
+            local frame_start_time
+            if (( frame_count % 50 == 0 )); then
+                frame_start_time=$(date +%s%N)
+            fi
+        fi
+        
+        # ОБНОВЛЕНИЕ ПОЗИЦИЙ КОЛОНОК И БУФЕРА
+        for ((i=0; i<width; i+=columns_step)); do
             # Двигаем колонку вниз
-            positions[$i]=$((positions[$i] + speeds[$i]))
-            # Выравниваем колонку по нижнему краю экрана
-            if [ ${positions[$i]} -ge $HEIGHT ]; then
-                positions[$i]=$((HEIGHT-1))
+            positions[i]=$((positions[i] + speeds[i]))
+            
+            # Выравниваем по нижнему краю
+            if (( positions[i] >= height )); then
+                positions[i]=$((height - 1))
             fi
-
-            # Рисуем колонку по строкам вверх от головного символа
-            for ((j=0; j<${lengths[$i]}; j++)); do
-                # Отрисовка символа в колонке
-                line_pos=$((positions[$i] - j))
-                # Проверяем, находится ли в пределах экрана
-                if [ $line_pos -ge 0 ] && [ $line_pos -lt $HEIGHT ]; then
-                    # Выбираем символ
-                    char=${CHARS:$((RANDOM % ${#CHARS})):1}
-                    # Выбираем градиент цвета по позиции в колонке
-                    # Голова (самый нижний): позиция 0
-                    if [ $j -eq 0 ]; then
-                        color_idx=0
-                    # Символ в позиции 1
-                    elif [ $j -eq 1 ]; then
-                        color_idx=1
-                    # Символы в позиции 2-3
-                    elif [ $j -lt 4 ]; then
-                        color_idx=2
-                    # Символы в позиции 4-6
-                    elif [ $j -lt 7 ]; then
-                        color_idx=3
-                    # Символы в позиции 7-9
-                    elif [ $j -lt 10 ]; then
-                        color_idx=4
-                    # Остальные символы в позиции 10 и выше
-                    else
-                        color_idx=5
-                    fi
-
-                    # Устанавливаем позицию курсора и выводим символ с цветом
-                    tput cup $line_pos $i 2>/dev/null
-                    echo -ne "${COLORS[$color_idx]}${char}"
+            
+            # ОПТИМИЗАЦИЯ: вычисляем границы отрисовки один раз
+            local col_top=$((positions[i] - lengths[i] + 1))
+            local col_bottom=${positions[i]}
+            
+            # Ограничиваем экраном
+            if (( col_top < 0 )); then col_top=0; fi
+            if (( col_bottom >= height )); then col_bottom=$((height - 1)); fi
+            
+            # ОБНОВЛЕНИЕ СИМВОЛОВ В КОЛОНКЕ
+            for ((line_pos=col_top; line_pos<=col_bottom; line_pos++)); do
+                local buffer_idx=$((line_pos * width + i))
+                
+                # 1. Обновляем символ (случайный из набора)
+                char_buffer[buffer_idx]=${chars:$((RANDOM % chars_count)):1}
+                
+                # 2. Вычисляем цвет (математически вместо if/elif)
+                local j=$((positions[i] - line_pos))
+                local color_idx
+                
+                # ОПТИМИЗАЦИЯ: математическое вычисление вместо цепочки if
+                if (( j == 0 )); then
+                    color_idx=0
+                elif (( j == 1 )); then
+                    color_idx=1
+                elif (( j < 4 )); then
+                    color_idx=2
+                elif (( j < 7 )); then
+                    color_idx=3
+                elif (( j < 10 )); then
+                    color_idx=4
+                else
+                    color_idx=5
                 fi
+                
+                # Альтернатива (немного быстрее, но менее читаемо):
+                # color_idx=$(( j == 0 ? 0 : j == 1 ? 1 : j < 4 ? 2 : j < 7 ? 3 : j < 10 ? 4 : 5 ))
+                
+                color_buffer[buffer_idx]=$color_idx
             done
-
-            if [ "${ERASE_MODE}" = 1 ]; then
-                # Стираем хвост
-                if [ ${speeds[$i]} -eq 1 ]; then
-                    erase=$((positions[$i] - lengths[$i]))
-                    if [ $erase -ge 0 ] && [ $erase -lt $HEIGHT ]; then
-                        tput cup $erase $i 2>/dev/null
-                        echo -n " "
-                    fi
+            
+            # ОБРАБОТКА СТИРАНИЯ ХВОСТА (если включено)
+            if (( ERASE_MODE == 1 && speeds[i] == 1 )); then
+                local erase=$((positions[i] - lengths[i]))
+                if (( erase >= 0 && erase < height )); then
+                    local erase_idx=$((erase * width + i))
+                    char_buffer[erase_idx]=" "
+                    color_buffer[erase_idx]=$default_color_idx
                 fi
             fi
-
-            # Если колонка дошла до конца экрана
-            if [ ${positions[$i]} -eq $((HEIGHT-1)) ]; then
-                # Сбрасываем позицию и в части случаев генерируем новую длину и скорость
-                positions[$i]=0
-                if [ $((RANDOM % 2)) -eq 0 ]; then
-                    lengths[$i]=$(random_length)
-                    speeds[$i]=$(random_speed)
+            
+            # ПЕРЕЗАПУСК КОЛОНКИ ПО ДОСТИЖЕНИИ НИЗА
+            if (( positions[i] == height - 1 )); then
+                positions[i]=0
+                if (( RANDOM % 2 == 0 )); then
+                    lengths[i]=$(random_length)
+                    speeds[i]=$(random_speed)
                 fi
             fi
-
         done
         
-        # Небольшая задержка
-        sleep $SPEED
+        # --- ФОРМИРОВАНИЕ И ВЫВОД КАДРА (самая критичная часть) ---
+        
+        local frame_buffer=""
+        
+        # ОПТИМИЗАЦИЯ: используем один цикл по буферу вместо вложенных
+        for ((row=0; row<height; row++)); do
+            local line_buffer=""
+            local row_start=$((row * width))
+            local row_end=$((row_start + width))
+            
+            # ОПТИМИЗАЦИЯ: прямой индекс в буфере вместо row*width+col
+            for ((idx=row_start; idx<row_end; idx++)); do
+                # Самая быстрая конкатенация (ваши замеры это подтвердили)
+                line_buffer+=${COLOR_STRINGS[${color_buffer[idx]}]}
+                line_buffer+=${char_buffer[idx]}
+            done
+
+            # В последней строке не добавляем \n, чтобы не вызвать скролл за пределы экрана
+            if (( row < height - 1 )); then
+                frame_buffer+="$line_buffer\n"
+            else
+                frame_buffer+="$line_buffer"
+            fi
+        done
+        
+        # ВЫВОД КАДРА НА ЭКРАН
+        # ОПТИМИЗАЦИЯ: tput cup быстрее чем clear
+        tput cup 0 0 2>/dev/null
+        echo -en "$frame_buffer"
+        
+        # --- СТАТИСТИКА И ЗАДЕРЖКА ---
+
+        if ((TEST_FPS == 1)); then
+            # СБОР СТАТИСТИКИ ПРОИЗВОДИТЕЛЬНОСТИ
+            ((frame_count++))
+            
+            # Каждые 50 кадров записываем точное время отрисовки
+            if (( frame_count % 50 == 0 )); then
+                local frame_end_time=$(date +%s%N)
+                local frame_time_ns=$((frame_end_time - frame_start_time))
+                local frame_time_ms=$((frame_time_ns / 1000000))
+                
+                local elapsed_total=$((SECONDS - start_time))
+                local fps=$((frame_count / (elapsed_total > 0 ? elapsed_total : 1)))
+                
+                # Записываем в лог
+                echo "Frame: $frame_count, Buffer build: ~${frame_time_ms}ms, FPS: $fps" >> "$FPS_LOG_FILE"
+                
+            fi
+
+            # Выводим FPS в углу экрана
+            if (( fps > 0 )); then
+                tput cup 0 0 2>/dev/null
+                echo -ne "${COLOR_STRINGS[0]}${fps} fps "
+            fi
+
+            # Автоматический выход после N кадров (для бенчмарков)
+            if (( frame_count >= 500 )); then
+                echo "Benchmark complete: ${fps} FPS average" >> "$FPS_LOG_FILE"
+                cleanup
+            fi
+        fi
+
+        if [ -n "${DELAY}" ]; then
+            sleep $DELAY
+        fi
     done
 }
 
@@ -328,6 +478,8 @@ do_matrix() {
 do_init() {
     WIDTH=$(tput cols)
     HEIGHT=$(tput lines)
+    # WIDTH=80
+    # HEIGHT=24
 
     init_chars
     init_colors

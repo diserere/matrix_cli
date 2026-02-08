@@ -1,6 +1,6 @@
 Matrix Console Animation
 ---
-Bash-скрипт, имитирующий визуализацию из фильма "Матрица" прямо в терминале.
+Bash-скрипт, имитирующий визуализацию из фильма "Матрица" в терминале.
 
 [![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](https://github.com/diserere/matrix_cli/releases)
 
@@ -27,7 +27,7 @@ chmod +x matrix.sh
 ./matrix.sh
 ```
 
-## Использование
+## Примеры использования
 
 ```bash
 # Базовый запуск (зелёный Matrix)
@@ -57,7 +57,7 @@ chmod +x matrix.sh
 ./matrix.sh --update
 ```
 
-### Параметры командной строки
+## Параметры командной строки
 
 | Параметр | Короткая версия | Описание |
 |----------|----------------|----------|
@@ -96,19 +96,22 @@ chmod +x matrix.sh
 - Ubuntu/Debian (bash 5.0+)
 - macOS (bash 3.2+ с установленным `coreutils`)
 - Termux (Android)
-  - Требует установки пакета `ncurses-utils` из-за зависимости от `tput`:
-    ```
-    pkg update && pkg upgrade && pkg install ncurses-utils
-    ``` 
+  > [!NOTE]
+  > Запуск в Termux требует установки пакета `ncurses-utils` из-за зависимости от `tput`:
+  > ```
+  > pkg update && pkg upgrade && pkg install ncurses-utils
+  > ``` 
 <!-- - Windows WSL/WSL2 -->
+
 
 ## Производительность
 
-**Совет:** Используйте `--delay` для уменьшения скорости анимации на маленьких экранах:
-```bash
-# Для терминала 80х24
-./matrix.sh --delay 0.2
-```
+> [!TIP]
+> Используйте `--delay` для уменьшения скорости анимации на маленьких экранах:
+> ```bash
+> # Для терминала 80х24
+> ./matrix.sh --delay 0.2
+> ```
 
 | Разрешение | FPS (без задержки) | Рекомендуемая задержка |
 |------------|-------------------|------------------------|
@@ -116,21 +119,6 @@ chmod +x matrix.sh
 | 120×40 | ~12 | 0.05-0.2s |
 | 238×65 (FullHD) | ~5 | no delay |
 
-## Примеры использования
-
-```bash
-# Классический Matrix
-./matrix.sh
-
-# Двоичный дождь с эффектом стирания
-./matrix.sh -b -e
-
-# Минималистичный серый вариант
-./matrix.sh -g
-
-# Проверить доступные цвета перед использованием
-./matrix.sh -t
-```
 
 ## Скриншоты
 
@@ -144,41 +132,41 @@ chmod +x matrix.sh
 ### Примеры режимов
 - `matrix.sh`
 
-![matrix_green.png](images/matrix_green.png)
+![matrix_green_600px.png](images/matrix_green_600px.png)
 
 - `matrix.sh --binary --erase`
 
-![matrix_green_binary.png](images/matrix_green_binary.png)
+![matrix_green_binary_600px.png](images/matrix_green_binary_600px.png)
 
 - `matrix.sh --grayscale`
 
-![matrix_gray_2.png](images/matrix_gray_2.png)
+![matrix_gray_2.png](images/matrix_gray_2_600px.png)
 
 - `matrix.sh --grayscale --binary --erase`
 
-![matrix_gray_binary_2.png](images/matrix_gray_binary_2.png)
+![matrix_gray_binary_2_600px.png](images/matrix_gray_binary_2_600px.png)
 
 - `matrix.sh --test`
 
-![matrix_color_test.png](images/matrix_color_test.png)
+![matrix_color_test_600px.png](images/matrix_color_test_600px.png)
 
 - `matrix.sh --fps --b -e -d 0.01`
 
-![matrix_test_fps_1.png](images/matrix_test_fps_1.png)
+![matrix_test_fps_1_600px.png](images/matrix_test_fps_1_600px.png)
 
-![matrix_test_fps_2.png](images/matrix_test_fps_2.png)
+![matrix_test_fps_2_600px.png](images/matrix_test_fps_2_600px.png)
 
 - `matrix.sh --help`
 
-![matrix_help.png](images/matrix_help.png)
+![matrix_help_600px.png](images/matrix_help_600px.png)
 
 - `matrix.sh --version`
 
-![matrix_help.png](images/matrix_version.png)
+![matrix_version_600px.png](images/matrix_version_600px.png)
 
 - `matrix.sh --update`
 
-![matrix_help.png](images/matrix_update.png)
+![matrix_update_600px.png](images/matrix_update_600px.png)
 
 
 ## Лицензия
@@ -204,8 +192,9 @@ MIT License. Смотрите файл LICENSE для подробностей.
 
 ## Список изменений
 
-Подробную информацию об изменениях в каждой версии см. в файле [CHANGELOG.md](CHANGELOG.md).
+[CHANGELOG.md](CHANGEG.md) - подробная информация об в каждой версии.
 
 ---
 
-**Примечание**: Для лучшего опыта рекомендуется использовать терминал с поддержкой 256 цветов.
+> [!TIP]
+> Для лучшего опыта рекомендуется использовать терминал с поддержкой 256 цветов.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.1.2
+# Version: 0.2.0
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,7 +9,7 @@
 
 
 # Version info
-VERSION="0.1.2"
+VERSION="0.2.0"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
@@ -44,6 +44,11 @@ cleanup() {
     # Очистка экрана
     clear
     echo -e "\n${COLORS[5]}Wake up Neo.${RESET}\n"
+
+    if [ $TEST_FPS -eq 1 ]; then
+        cat "$FPS_LOG_FILE" >&2
+    fi
+
     exit 0
 }
 trap cleanup INT TERM
@@ -231,9 +236,9 @@ show_help() {
     echo "  -e, --erase         Включить стирание хвоста колонок"
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
-    echo "  -f, --fps           замер производительности FPS (лог-файл ${FPS_LOG_FILE})"
-    echo "  -d, --delay s[.ss]  Задержка в секундах при выводе буфера кадра"
-    echo "  -v, --version       Show version information"
+    echo "  -f, --fps           Тест производительности FPS (лог-файл ${FPS_LOG_FILE})"
+    echo "  -d, --delay 0.1     Задержка в секундах при выводе буфера кадра"
+    echo "  -v, --version       Показать информацию о версии"
     echo "  -u, --update        Обновить до последней версии из Github repo"
     echo "  -h, --help          Показать эту справку"
     echo ""
@@ -416,8 +421,13 @@ do_matrix() {
                 line_buffer+=${COLOR_STRINGS[${color_buffer[idx]}]}
                 line_buffer+=${char_buffer[idx]}
             done
-            
-            frame_buffer+="$line_buffer\n"
+
+            # В последней строке не добавляем \n, чтобы не вызвать скролл за пределы экрана
+            if (( row < height - 1 )); then
+                frame_buffer+="$line_buffer\n"
+            else
+                frame_buffer+="$line_buffer"
+            fi
         done
         
         # ВЫВОД КАДРА НА ЭКРАН
@@ -444,15 +454,18 @@ do_matrix() {
                 echo "Frame: $frame_count, Buffer build: ~${frame_time_ms}ms, FPS: $fps" >> "$FPS_LOG_FILE"
                 
             fi
-                # ОПЦИОНАЛЬНО: выводим FPS в углу экрана
+
+            # Выводим FPS в углу экрана
+            if (( fps > 0 )); then
                 tput cup 0 0 2>/dev/null
                 echo -ne "${COLOR_STRINGS[0]}${fps} fps "
-            
+            fi
+
             # Автоматический выход после N кадров (для бенчмарков)
-            # if (( frame_count >= 500 )); then
-            #     echo "Benchmark complete: ${fps} FPS average" >> "$FPS_LOG_FILE"
-            #     cleanup
-            # fi
+            if (( frame_count >= 500 )); then
+                echo "Benchmark complete: ${fps} FPS average" >> "$FPS_LOG_FILE"
+                cleanup
+            fi
         fi
 
         if [ -n "${DELAY}" ]; then
@@ -463,11 +476,10 @@ do_matrix() {
 
 # Инициализация
 do_init() {
+    WIDTH=$(tput cols)
+    HEIGHT=$(tput lines)
     # WIDTH=80
     # HEIGHT=24
-    WIDTH=$(tput cols)
-    # HEIGHT=$(tput lines)
-    HEIGHT=$(($(tput lines) - 1))
 
     init_chars
     init_colors

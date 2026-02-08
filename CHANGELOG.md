@@ -19,8 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### [0.2.0] (2026-02-08)
 
 #### Performance
-  - **Major rendering refactor**: Replaced per-character refresh with buffered output
-  **10-30x speed improvement**: Achieved ~25 FPS at 80×24 and ~5 FPS at 238×65 resolution (Gnome terminal in full-screen mode on FullHD display)
+- **Major rendering refactor**: Replaced per-character refresh with buffered output
+- **10-30x speed improvement**: Achieved ~25 FPS at 80×24 and ~5 FPS at 238×65 resolution (Gnome terminal in full-screen mode on FullHD display)
 
 #### Added
 - **FPS benchmarking mode**: `-f, --fps` flag for performance testing

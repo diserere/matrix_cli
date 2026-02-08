@@ -27,6 +27,9 @@ chmod +x matrix.sh
 ./matrix.sh
 ```
 
+> [!TIP]
+> Для лучшего опыта рекомендуется использовать терминал с поддержкой 256 цветов.
+
 ## Примеры использования
 
 ```bash
@@ -96,11 +99,11 @@ chmod +x matrix.sh
 - Ubuntu/Debian (bash 5.0+)
 - macOS (bash 3.2+ с установленным `coreutils`)
 - Termux (Android)
-  > [!NOTE]
-  > Запуск в Termux требует установки пакета `ncurses-utils` из-за зависимости от `tput`:
-  > ```
-  > pkg update && pkg upgrade && pkg install ncurses-utils
-  > ``` 
+> [!NOTE]
+> Запуск в Termux требует установки пакета `ncurses-utils` из-за зависимости от `tput`:
+> ```
+> pkg update && pkg upgrade && pkg install ncurses-utils
+> ``` 
 <!-- - Windows WSL/WSL2 -->
 
 
@@ -193,8 +196,3 @@ MIT License. Смотрите файл LICENSE для подробностей.
 ## Список изменений
 
 [CHANGELOG.md](CHANGEG.md) - подробная информация об в каждой версии.
-
----
-
-> [!TIP]
-> Для лучшего опыта рекомендуется использовать терминал с поддержкой 256 цветов.

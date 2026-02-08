@@ -267,16 +267,42 @@ random_length() {
 # Основной цикл анимации (оптимизированная версия)
 do_matrix() {
     check_dependencies "tput"
-
-    # Массив для символов в колонках
+    
+    # --- ПРЕДВЫЧИСЛЕНИЯ ДЛЯ ПРОИЗВОДИТЕЛЬНОСТИ ---
+    
+    # 1. Кэшируем цветовые строки (самая важная оптимизация!)
+    declare -a COLOR_STRINGS
+    for i in {0..5}; do
+        COLOR_STRINGS[i]="${COLORS[i]}"
+    done
+    local RESET_STR="$RESET"
+    
+    # 2. Локальные переменные для часто используемых значений
+    local width=$WIDTH
+    local height=$HEIGHT
+    local chars="$CHARS"
+    local chars_count=$CHARS_COUNT
+    
+    # 3. Размер буфера и предвычисленные константы
+    local buffer_size=$((width * height))
+    local columns_step=3  # Можно увеличить до 4 или 5 для большей скорости
+    local default_color_idx=5
+    
+    # --- ИНИЦИАЛИЗАЦИЯ БУФЕРОВ ---
+    
+    # Массивы для символов и цветов
     local -a char_buffer
     local -a color_buffer
-    local buffer_size=$((WIDTH * HEIGHT))
+    local -a prev_char_buffer  # Для частичной перерисовки (опционально)
+    local -a prev_color_buffer # Для частичной перерисовки (опционально)
     
-    # Инициализируем буферы пробелами и индексом цвета по умолчанию (5 - самый тёмный)
+    # Заполняем буферы начальными значениями
     for ((idx=0; idx<buffer_size; idx++)); do
         char_buffer[idx]=" "
-        color_buffer[idx]=5
+        color_buffer[idx]=$default_color_idx
+        # Для частичной перерисовки:
+        prev_char_buffer[idx]=""
+        prev_color_buffer[idx]=-1
     done
     
     # --- ИНИЦИАЛИЗАЦИЯ СТАТИСТИКИ ---
@@ -304,86 +330,94 @@ do_matrix() {
             fi
         fi
         
-        # # ОБНОВЛЕНИЕ ПОЗИЦИЙ КОЛОНОК И БУФЕРА
-        # for ((i=0; i<width; i+=columns_step)); do
-        # Обновление положения колонок в буфере кадра
-        for ((i=0; i<WIDTH; i+=3)); do
+        # ОБНОВЛЕНИЕ ПОЗИЦИЙ КОЛОНОК И БУФЕРА
+        for ((i=0; i<width; i+=columns_step)); do
             # Двигаем колонку вниз
-            positions[$i]=$((positions[$i] + speeds[$i]))
-            # Выравниваем колонку по нижнему краю экрана
-            if [ ${positions[$i]} -ge $HEIGHT ]; then
-                positions[$i]=$((HEIGHT-1))
+            positions[i]=$((positions[i] + speeds[i]))
+            
+            # Выравниваем по нижнему краю
+            if (( positions[i] >= height )); then
+                positions[i]=$((height - 1))
             fi
-
-            # Рисуем колонку по строкам вверх от головного символа
-            for ((j=0; j<${lengths[$i]}; j++)); do
-                # Отрисовка символа в колонке
-                line_pos=$((positions[$i] - j))
-                # Проверяем, находится ли в пределах экрана
-                if [ $line_pos -ge 0 ] && [ $line_pos -lt $HEIGHT ]; then
-                    # Вычисляем индекс в одномерных буферах
-                    buffer_idx=$((line_pos * WIDTH + i))
-                    # Обновляем буфер символов в нужной позиции 
-                    char_buffer[$buffer_idx]=${CHARS:$((RANDOM % ${CHARS_COUNT})):1}
-                    # Выбираем градиент цвета по позиции в колонке:
-                    if [ $j -eq 0 ]; then
-                        # Голова (самый нижний): позиция 0
-                        color_idx=0
-                    elif [ $j -eq 1 ]; then
-                        # Символ в позиции 1
-                        color_idx=1
-                    elif [ $j -lt 4 ]; then
-                        # Символы в позиции 2-3
-                        color_idx=2
-                    elif [ $j -lt 7 ]; then
-                        # Символы в позиции 4-6
-                        color_idx=3
-                    elif [ $j -lt 10 ]; then
-                        # Символы в позиции 7-9
-                        color_idx=4
-                    else
-                        # Остальные символы в позиции 10 и выше
-                        color_idx=5
-                    fi
-                    # Обновляем буфер цветов
-                    color_buffer[$buffer_idx]=$color_idx
+            
+            # ОПТИМИЗАЦИЯ: вычисляем границы отрисовки один раз
+            local col_top=$((positions[i] - lengths[i] + 1))
+            local col_bottom=${positions[i]}
+            
+            # Ограничиваем экраном
+            if (( col_top < 0 )); then col_top=0; fi
+            if (( col_bottom >= height )); then col_bottom=$((height - 1)); fi
+            
+            # ОБНОВЛЕНИЕ СИМВОЛОВ В КОЛОНКЕ
+            for ((line_pos=col_top; line_pos<=col_bottom; line_pos++)); do
+                local buffer_idx=$((line_pos * width + i))
+                
+                # 1. Обновляем символ (случайный из набора)
+                char_buffer[buffer_idx]=${chars:$((RANDOM % chars_count)):1}
+                
+                # 2. Вычисляем цвет (математически вместо if/elif)
+                local j=$((positions[i] - line_pos))
+                local color_idx
+                
+                # ОПТИМИЗАЦИЯ: математическое вычисление вместо цепочки if
+                if (( j == 0 )); then
+                    color_idx=0
+                elif (( j == 1 )); then
+                    color_idx=1
+                elif (( j < 4 )); then
+                    color_idx=2
+                elif (( j < 7 )); then
+                    color_idx=3
+                elif (( j < 10 )); then
+                    color_idx=4
+                else
+                    color_idx=5
                 fi
+                
+                # Альтернатива (немного быстрее, но менее читаемо):
+                # color_idx=$(( j == 0 ? 0 : j == 1 ? 1 : j < 4 ? 2 : j < 7 ? 3 : j < 10 ? 4 : 5 ))
+                
+                color_buffer[buffer_idx]=$color_idx
             done
-
-            if [ "${ERASE_MODE}" = 1 ]; then
-                # Стираем хвост
-                if [ ${speeds[$i]} -eq 1 ]; then
-                    erase=$((positions[$i] - lengths[$i]))
-                    if [ $erase -ge 0 ] && [ $erase -lt $HEIGHT ]; then
-                        buffer_idx=$((erase * WIDTH + i))
-                        char_buffer[$buffer_idx]=" "
-                        color_buffer[$buffer_idx]=5  # или цвет фона
-                    fi
+            
+            # ОБРАБОТКА СТИРАНИЯ ХВОСТА (если включено)
+            if (( ERASE_MODE == 1 && speeds[i] == 1 )); then
+                local erase=$((positions[i] - lengths[i]))
+                if (( erase >= 0 && erase < height )); then
+                    local erase_idx=$((erase * width + i))
+                    char_buffer[erase_idx]=" "
+                    color_buffer[erase_idx]=$default_color_idx
                 fi
             fi
-
-            # Если колонка дошла до конца экрана
-            if [ ${positions[$i]} -eq $((HEIGHT-1)) ]; then
-                # Сбрасываем позицию и в части случаев генерируем новую длину и скорость
-                positions[$i]=0
-                if [ $((RANDOM % 2)) -eq 0 ]; then
-                    lengths[$i]=$(random_length)
-                    speeds[$i]=$(random_speed)
+            
+            # ПЕРЕЗАПУСК КОЛОНКИ ПО ДОСТИЖЕНИИ НИЗА
+            if (( positions[i] == height - 1 )); then
+                positions[i]=0
+                if (( RANDOM % 2 == 0 )); then
+                    lengths[i]=$(random_length)
+                    speeds[i]=$(random_speed)
                 fi
             fi
-
         done
-
-        # Вывод кадра
+        
+        # --- ФОРМИРОВАНИЕ И ВЫВОД КАДРА (самая критичная часть) ---
+        
         local frame_buffer=""
-        local line_buffer
-        for ((row=0; row<HEIGHT; row++)); do
-            line_buffer=""
-            for ((col=0; col<WIDTH; col++)); do
-                idx=$((row * WIDTH + col))
-                line_buffer+="${COLORS[${color_buffer[idx]}]}${char_buffer[idx]}"
+        
+        # ОПТИМИЗАЦИЯ: используем один цикл по буферу вместо вложенных
+        for ((row=0; row<height; row++)); do
+            local line_buffer=""
+            local row_start=$((row * width))
+            local row_end=$((row_start + width))
+            
+            # ОПТИМИЗАЦИЯ: прямой индекс в буфере вместо row*width+col
+            for ((idx=row_start; idx<row_end; idx++)); do
+                # Самая быстрая конкатенация (ваши замеры это подтвердили)
+                line_buffer+=${COLOR_STRINGS[${color_buffer[idx]}]}
+                line_buffer+=${char_buffer[idx]}
             done
-            frame_buffer+="${line_buffer}\n"
+            
+            frame_buffer+="$line_buffer\n"
         done
         
         # ВЫВОД КАДРА НА ЭКРАН

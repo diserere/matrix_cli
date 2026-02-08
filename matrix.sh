@@ -15,7 +15,7 @@ REPO_URL="https://github.com/diserere/matrix_cli"
 
 
 # Конфигурация
-SPEED=0.05
+DELAY=0.1
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
 
 # Массивы для хранения данных колонок
@@ -105,12 +105,12 @@ init_chars() {
         CHARS="$CHARS_FULL"
         CHARS_MODE="FULL"
     fi
+    CHARS_COUNT=${#CHARS}
 }
 
 # Проверка зависимостей
 check_dependencies() {
     for dep in $1; do
-        # echo "Проверка наличия $dep..."
         if ! command -v ${dep} &> /dev/null; then
             echo "Ошибка: ${dep} не установлен" >&2
             exit 1
@@ -252,7 +252,29 @@ do_matrix() {
 
     check_dependencies "tput"
 
+    # Массив для символов в колонках
+    local -a char_buffer
+    # Массив для цветовых кодов (храним индексы цветов из COLORS)
+    local -a color_buffer
+    local buffer_size=$((WIDTH * HEIGHT))
+    
+    # Инициализируем буферы пробелами и индексом цвета по умолчанию (5 - самый тёмный)
+    for ((idx=0; idx<buffer_size; idx++)); do
+        char_buffer[idx]=" "
+        color_buffer[idx]=5
+    done
+
+    # Каунтеры FPS
+    local frame_count=0
+    local start_time=$SECONDS
+    local FPS_LOG_FILE=/tmp/matrix_fps.log
+
+    echo "Frame size (W * H): ${WIDTH} * ${HEIGHT}" > "${FPS_LOG_FILE}"
+
+    # Fraame loop
     while true; do
+    
+        # Обновление положения колонок в буфере кадра
         for ((i=0; i<WIDTH; i+=3)); do
             # Двигаем колонку вниз
             positions[$i]=$((positions[$i] + speeds[$i]))
@@ -267,32 +289,32 @@ do_matrix() {
                 line_pos=$((positions[$i] - j))
                 # Проверяем, находится ли в пределах экрана
                 if [ $line_pos -ge 0 ] && [ $line_pos -lt $HEIGHT ]; then
-                    # Выбираем символ
-                    char=${CHARS:$((RANDOM % ${#CHARS})):1}
-                    # Выбираем градиент цвета по позиции в колонке
-                    # Голова (самый нижний): позиция 0
+                    # Вычисляем индекс в одномерных буферах
+                    buffer_idx=$((line_pos * WIDTH + i))
+                    # Обновляем буфер символов в нужной позиции 
+                    char_buffer[$buffer_idx]=${CHARS:$((RANDOM % ${CHARS_COUNT})):1}
+                    # Выбираем градиент цвета по позиции в колонке:
                     if [ $j -eq 0 ]; then
+                        # Голова (самый нижний): позиция 0
                         color_idx=0
-                    # Символ в позиции 1
                     elif [ $j -eq 1 ]; then
+                        # Символ в позиции 1
                         color_idx=1
-                    # Символы в позиции 2-3
                     elif [ $j -lt 4 ]; then
+                        # Символы в позиции 2-3
                         color_idx=2
-                    # Символы в позиции 4-6
                     elif [ $j -lt 7 ]; then
+                        # Символы в позиции 4-6
                         color_idx=3
-                    # Символы в позиции 7-9
                     elif [ $j -lt 10 ]; then
+                        # Символы в позиции 7-9
                         color_idx=4
-                    # Остальные символы в позиции 10 и выше
                     else
+                        # Остальные символы в позиции 10 и выше
                         color_idx=5
                     fi
-
-                    # Устанавливаем позицию курсора и выводим символ с цветом
-                    tput cup $line_pos $i 2>/dev/null
-                    echo -ne "${COLORS[$color_idx]}${char}"
+                    # Обновляем буфер цветов
+                    color_buffer[$buffer_idx]=$color_idx
                 fi
             done
 
@@ -301,8 +323,9 @@ do_matrix() {
                 if [ ${speeds[$i]} -eq 1 ]; then
                     erase=$((positions[$i] - lengths[$i]))
                     if [ $erase -ge 0 ] && [ $erase -lt $HEIGHT ]; then
-                        tput cup $erase $i 2>/dev/null
-                        echo -n " "
+                        buffer_idx=$((erase * WIDTH + i))
+                        char_buffer[$buffer_idx]=" "
+                        color_buffer[$buffer_idx]=5  # или цвет фона
                     fi
                 fi
             fi
@@ -318,14 +341,42 @@ do_matrix() {
             fi
 
         done
-        
+
+        # Вывод кадра
+        local frame_buffer=""
+        local line_buffer
+        # for ((row=0; row<HEIGHT; row++)); do
+        for ((row=0; row<HEIGHT-1; row++)); do
+            line_buffer=""
+            for ((col=0; col<WIDTH; col++)); do
+                idx=$((row * WIDTH + col))
+                line_buffer+="${COLORS[${color_buffer[idx]}]}${char_buffer[idx]}"
+            done
+            frame_buffer+="${line_buffer}\n"
+        done
+        # clear
+        tput cup 0 0 2>/dev/null
+        echo -en "$frame_buffer"
+
         # Небольшая задержка
-        sleep $SPEED
+        sleep $DELAY
+
+        # Подсчет FPS
+        ((frame_count++))
+        if (( frame_count % 100 == 0 )); then
+            local elapsed=$((SECONDS - start_time))
+            local fps=$((frame_count / (elapsed > 0 ? elapsed : 1)))
+            # Выводим в угол экрана или файл
+            echo "elapsed (s): ${elapsed} FPS: $fps" >> "${FPS_LOG_FILE}"
+        fi
+
     done
 }
 
 # Инициализация
 do_init() {
+    # WIDTH=80
+    # HEIGHT=24
     WIDTH=$(tput cols)
     HEIGHT=$(tput lines)
 

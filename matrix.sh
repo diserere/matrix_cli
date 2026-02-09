@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.2.0
+# Version: 0.2.1
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,7 +9,7 @@
 
 
 # Version info
-VERSION="0.2.0"
+VERSION="0.2.1"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
@@ -90,7 +90,7 @@ init_colors() {
     else
         # Зеленые оттенки (256 цветов)
         COLORS=(
-            "\033[38;5;120m"    # 0: Очень яркий зеленый
+            "\033[38;5;118m"    # 0: Очень яркий зеленый
             "\033[38;5;46m"     # 1: Яркий зеленый
             "\033[38;5;40m"     # 2: Зеленый
             "\033[38;5;34m"     # 3: Темно-зеленый
@@ -290,7 +290,7 @@ do_matrix() {
     
     # 3. Размер буфера и предвычисленные константы
     local buffer_size=$((width * height))
-    local columns_step=3  # Можно увеличить до 4 или 5 для большей скорости
+    local columns_step=1  # Можно увеличить до 4 или 5 для большей скорости
     local default_color_idx=5
     
     # --- ИНИЦИАЛИЗАЦИЯ БУФЕРОВ ---
@@ -418,8 +418,7 @@ do_matrix() {
             # ОПТИМИЗАЦИЯ: прямой индекс в буфере вместо row*width+col
             for ((idx=row_start; idx<row_end; idx++)); do
                 # Самая быстрая конкатенация (ваши замеры это подтвердили)
-                line_buffer+=${COLOR_STRINGS[${color_buffer[idx]}]}
-                line_buffer+=${char_buffer[idx]}
+                line_buffer+=${COLOR_STRINGS[${color_buffer[idx]}]}${char_buffer[idx]}
             done
 
             # В последней строке не добавляем \n, чтобы не вызвать скролл за пределы экрана

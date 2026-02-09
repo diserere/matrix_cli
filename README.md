@@ -2,7 +2,7 @@ Matrix Console Animation
 ---
 Bash-скрипт, имитирующий визуализацию из фильма "Матрица" в терминале.
 
-[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](https://github.com/diserere/matrix_cli/releases)
+[![Version](https://img.shields.io/badge/version-0.2.1-green.svg)](https://github.com/diserere/matrix_cli/releases)
 
 
 ![Matrix Demo](images/animated_matrix_green_v0.2.0_600px.gif)
@@ -190,7 +190,7 @@ MIT License. Смотрите файл LICENSE для подробностей.
 
 - Братьям Вачовски за вдохновение
 - Сообществу Linux за прекрасные инструменты
-- Большой нейросетевой модели DEEPSEEK за помощь и консультации
+- Большой языковой модели DEEPSEEK за помощь и консультации
 - Всем тестерам и контрибьюторам
 
 ## Список изменений

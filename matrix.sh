@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.2.0
+# Version: 0.2.1
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,7 +9,7 @@
 
 
 # Version info
-VERSION="0.2.0"
+VERSION="0.2.1"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 

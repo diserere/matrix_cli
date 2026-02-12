@@ -14,6 +14,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 #### Security -->
 #### Planned
 - Add terminal resize handling
+- Use in-memory log for FPS benchmark (should fix issue wirh benchmark log file in Android)
+- Fix bug with time detection while benchmarking in MacOS
+
+
+## [0.3.0] (2026-02-12)
+
+#### Added
+- **Performance control**: New `-s, --columns-step INT` flag to control column update step.
+  - Allows trading visual density for speed.
+  - Step value is now configurable and logged in FPS benchmark mode (`-f`).
+
+#### Fixed
+- **Actual default step mismatch**: Previously, the `columns_step` variable defaulted to `1`, but the init loop hardcoded `i+=3`. This caused to any changes to step value were ignored.
+  - **Effect**: Default behavior remains the same (step = 3), but now it's properly controlled by the `COLUMNS_STEP` variable and the new `-s` flag.
+- **Help text improvement**: Default values ​​are clearly stated in the help text for `--delay` and  `--columns-step` flags.
+- **Error text typo**: Corrected error message for `--delay` flag (previously referred to `--speed`).
+
+#### Changed
+- **Default delay**: Explicitly set to `0` in code (behavior unchanged).
 
 
 ## [0.2.1] (2026-02-09)
@@ -65,7 +84,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Help text with `-h, --help` flag
 
 
-[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.0
 [0.2.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.2.1
 [0.2.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.2.0
 [0.1.2]: https://github.com/diserere/matrix_cli/releases/tag/v0.1.2

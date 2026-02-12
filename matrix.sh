@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.2.1
+# Version: 0.3.0
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,13 +9,15 @@
 
 
 # Version info
-VERSION="0.2.1"
+VERSION="0.3.0"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
+# Дефолтные настройки
+DELAY=0         # Задержка по умолчанию
+COLUMNS_STEP=3  # Шаг колонок по умолчанию
 
 # Конфигурация
-DELAY=
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
 FPS_LOG_FILE=/tmp/matrix_fps.log
 
@@ -33,7 +35,7 @@ CHARS_BINARY="01"
 BINARY_MODE=0      # 0 = полный набор, 1 = двоичный
 ERASE_MODE=0       # 0 = не стирать хвост, 1 = стирать
 GRAYSCALE_MODE=0   # 0 = зеленый, 1 = оттенки серого
-FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
+# FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
 TEST_COLORS=0     # 0 = обычный режим, 1 = режим тестирования цветов
 TEST_FPS=0     # 0 = обычный режим, 1 = режим тестирования цветов
 
@@ -195,7 +197,16 @@ parse_args() {
                     DELAY="$2"
                     shift 2
                 else
-                    echo "Ошибка: --speed требует числового значения"
+                    echo "Ошибка: --delay требует числового значения"
+                    exit 1
+                fi
+                ;;
+            -s|--columns-step)
+                if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+                    COLUMNS_STEP="$2"
+                    shift 2
+                else
+                    echo "Ошибка: --columns-step требует числового значения"
                     exit 1
                 fi
                 ;;
@@ -237,7 +248,8 @@ show_help() {
     echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
     echo "  -t, --test          Вывод тестовой таблицы цветов"
     echo "  -f, --fps           Тест производительности FPS (лог-файл ${FPS_LOG_FILE})"
-    echo "  -d, --delay 0.1     Задержка в секундах при выводе буфера кадра"
+    echo "  -d, --delay FLOAT   Задержка в сек. при выводе буфера кадра, по умолчанию 0"
+    echo "  -s, --step INT      Шаг колонок анимации, по умолчанию 3"
     echo "  -v, --version       Показать информацию о версии"
     echo "  -u, --update        Обновить до последней версии из Github repo"
     echo "  -h, --help          Показать эту справку"
@@ -287,10 +299,10 @@ do_matrix() {
     local height=$HEIGHT
     local chars="$CHARS"
     local chars_count=$CHARS_COUNT
+    local columns_step=$COLUMNS_STEP
     
     # 3. Размер буфера и предвычисленные константы
     local buffer_size=$((width * height))
-    local columns_step=1  # Можно увеличить до 4 или 5 для большей скорости
     local default_color_idx=5
     
     # --- ИНИЦИАЛИЗАЦИЯ БУФЕРОВ ---
@@ -467,7 +479,7 @@ do_matrix() {
             fi
         fi
 
-        if [ -n "${DELAY}" ]; then
+        if [ "${DELAY}" != "0" ]; then
             sleep $DELAY
         fi
     done
@@ -483,7 +495,7 @@ do_init() {
     init_chars
     init_colors
 
-    for ((i=0; i<WIDTH; i+=3)); do
+    for ((i=0; i<WIDTH; i+=COLUMNS_STEP)); do
         lengths[$i]=$(random_length)
         positions[$i]=-$((RANDOM % lengths[$i]))
         speeds[$i]=$(random_speed)

@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 ## [0.3.0] (2026-02-12)
+### Add columns-step option
 
 #### Added
 - **Performance control**: New `-s, --columns-step INT` flag to control column update step.

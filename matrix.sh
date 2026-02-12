@@ -197,7 +197,7 @@ parse_args() {
                     DELAY="$2"
                     shift 2
                 else
-                    echo "Ошибка: --speed требует числового значения"
+                    echo "Ошибка: --delay требует числового значения"
                     exit 1
                 fi
                 ;;

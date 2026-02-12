@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Step value is now configurable and logged in FPS benchmark mode (`-f`).
 
 #### Fixed
-- **Actual default step mismatch**: Previously, the `columns_step` variable defaulted to `1`, but the animation loop hardcoded `i+=3`. This caused the `--delay` flag to work correctly, but any changes to step value were ignored.
+- **Actual default step mismatch**: Previously, the `columns_step` variable defaulted to `1`, but the init loop hardcoded `i+=3`. This caused to any changes to step value were ignored.
   - **Effect**: Default behavior remains the same (step = 3), but now it's properly controlled by the `COLUMNS_STEP` variable and the new `-s` flag.
 - **Help text improvement**: Default values ​​are clearly stated in the help text for `--delay` and  `--columns-step` flags.
 - **Error text typo**: Corrected error message for `--delay` flag (previously referred to `--speed`).

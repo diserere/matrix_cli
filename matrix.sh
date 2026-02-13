@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.3.0
+# Version: 0.3.1
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,17 +9,21 @@
 
 
 # Version info
-VERSION="0.3.0"
+VERSION="0.3.1"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
-# Дефолтные настройки
-DELAY=0         # Задержка по умолчанию
-COLUMNS_STEP=3  # Шаг колонок по умолчанию
+# Конфигурация по умолчанию
+DELAY=0                 # Задержка по умолчанию
+DEFAULT_COLUMNS_STEP=3  # Шаг колонок по умолчанию
 
-# Конфигурация
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
 FPS_LOG_FILE=/tmp/matrix_fps.log
+
+
+# ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ
+
+COLUMNS_STEP=$DEFAULT_COLUMNS_STEP  # Глобальная переменная для шага колонок
 
 # Массивы для хранения данных колонок
 declare -a positions
@@ -32,12 +36,11 @@ CHARS_BINARY="01"
 
 
 # Флаги
-BINARY_MODE=0      # 0 = полный набор, 1 = двоичный
-ERASE_MODE=0       # 0 = не стирать хвост, 1 = стирать
-GRAYSCALE_MODE=0   # 0 = зеленый, 1 = оттенки серого
-# FLASH_EFFECT=0     # 0 = нет вспышек, 1 = есть вспышки
-TEST_COLORS=0     # 0 = обычный режим, 1 = режим тестирования цветов
-TEST_FPS=0     # 0 = обычный режим, 1 = режим тестирования цветов
+BINARY_MODE=0       # 0 = полный набор, 1 = двоичный
+ERASE_MODE=0        # 0 = не стирать хвост, 1 = стирать
+GRAYSCALE_MODE=0    # 0 = зеленый, 1 = оттенки серого
+TEST_COLORS=0       # 0 = обычный режим, 1 = режим тестирования цветов
+TEST_FPS=0          # 0 = обычный режим, 1 = режим тестирования FPS
 
 
 # Функция для очистки при выходе
@@ -140,7 +143,7 @@ update_script() {
     # Загружаем обновление
     echo "Загрузка обновления с GitHub..."
     
-    if curl -f -sS -L "${UPDATE_URL}" -o "${temp_path}" \
+    if curl -f -S -L "${UPDATE_URL}" -o "${temp_path}" \
         && [[ -s "${temp_path}" ]] \
         && head -1 "${temp_path}" | grep -q "^#!"; then
         
@@ -149,10 +152,11 @@ update_script() {
         # Тестовый запуск на синтаксис
         if bash -n "${temp_path}"; then
             mv "${temp_path}" "${script_path}"
-            echo "✅ Обновление успешно завершено!"
+            echo
+            echo "Обновление успешно завершено!"
             echo "Резервная копия сохранена в: ${backup_path}"
             echo
-            echo "- new version info:"
+            echo "Обновленная версия:"
             echo
             ${script_path} -v
             return 0
@@ -197,16 +201,16 @@ parse_args() {
                     DELAY="$2"
                     shift 2
                 else
-                    echo "Ошибка: --delay требует числового значения"
+                    echo "Ошибка: --delay (-d) требует числового значения" >&2
                     exit 1
                 fi
                 ;;
-            -s|--columns-step)
-                if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
+            -s|--step)
+                if [[ -n "$2" && "$2" =~ ^[0-9]+$ && "$2" -gt 0 ]]; then
                     COLUMNS_STEP="$2"
                     shift 2
                 else
-                    echo "Ошибка: --columns-step требует числового значения"
+                    echo "Ошибка: --step (-s) требует целочисленного значения > 0" >&2
                     exit 1
                 fi
                 ;;
@@ -230,7 +234,7 @@ parse_args() {
                 exit 0
                 ;;
             *)
-                echo "Неизвестный аргумент: $1"
+                echo "Неизвестный аргумент: $1" >&2
                 show_help
                 exit 1
                 ;;
@@ -240,22 +244,25 @@ parse_args() {
 
 # Показать справку
 show_help() {
-    echo "Использование: $0 [опции]"
-    echo ""
-    echo "Опции:"
-    echo "  -b, --binary        Использовать двоичные символы (0 и 1)"
-    echo "  -e, --erase         Включить стирание хвоста колонок"
-    echo "  -g, --grayscale     Использовать оттенки серого вместо зеленого"
-    echo "  -t, --test          Вывод тестовой таблицы цветов"
-    echo "  -f, --fps           Тест производительности FPS (лог-файл ${FPS_LOG_FILE})"
-    echo "  -d, --delay FLOAT   Задержка в сек. при выводе буфера кадра, по умолчанию 0"
-    echo "  -s, --step INT      Шаг колонок анимации, по умолчанию 3"
-    echo "  -v, --version       Показать информацию о версии"
-    echo "  -u, --update        Обновить до последней версии из Github repo"
-    echo "  -h, --help          Показать эту справку"
-    echo ""
-    echo "Управление:"
-    echo "  Ctrl+C            Выход"
+    cat << EOF
+Использование: $0 [опции]
+
+Опции:
+  -b, --binary        Использовать двоичные символы (0 и 1)
+  -e, --erase         Включить стирание хвоста колонок
+  -g, --grayscale     Использовать оттенки серого вместо зеленого
+  -t, --test          Вывод тестовой таблицы цветов
+  -f, --fps           Тест производительности FPS (лог-файл ${FPS_LOG_FILE})
+  -d, --delay FLOAT   Задержка (сек) при выводе буфера кадра (по умолчанию ${DELAY})
+  -s, --step INT      Шаг колонок анимации (по умолчанию ${DEFAULT_COLUMNS_STEP})
+                        Минимальное значение: 1
+  -v, --version       Показать информацию о версии
+  -u, --update        Обновить до последней версии из Github repo
+  -h, --help          Показать эту справку
+
+Управление:
+  Ctrl+C              Выход
+EOF
 }
 
 # Показать версию
@@ -407,7 +414,7 @@ do_matrix() {
                 fi
             fi
             
-            # ПЕРЕЗАПУСК КОЛОНКИ ПО ДОСТИЖЕНИИ НИЗА
+            # ПЕРЕЗАПУСК КОЛОНКИ ПО ДОСТИЖЕНИЮ НИЗА
             if (( positions[i] == height - 1 )); then
                 positions[i]=0
                 if (( RANDOM % 2 == 0 )); then

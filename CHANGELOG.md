@@ -18,6 +18,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fix bug with time detection while benchmarking in MacOS
 
 
+## [0.3.1] (2026-02-13)
+### Bug fix release
+
+#### Changed
+- **Shortened long name**: Long name for `-s, --columns-step` option have been shortened to `--step`.
+- **Error reporting**: All error messages are sent to STDERR now.
+
+#### Added
+- **Param validation**: Validate that value for `--step`option is not only an integer but also greater than 0 to prevent break animation loop.
+- **Improved output**: Run `curl` tool in non-silent mode while updating from repo.
+
+#### Fixed
+- **Help and service messages improvement**: Some changes for `--help` and `--update` options to make its output clearer.
+- Code formatting
+
+
 ## [0.3.0] (2026-02-12)
 ### Add columns-step option
 
@@ -85,7 +101,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Help text with `-h, --help` flag
 
 
-[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.1
 [0.3.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.0
 [0.2.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.2.1
 [0.2.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.2.0

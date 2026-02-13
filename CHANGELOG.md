@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add terminal resize handling
 
 ## [0.3.2] (2026-02-13)
-### Technical improvements release
+### Keep benchmark log in memory
 
 #### Fixed
 - **Android compatibility**: FPS benchmark mode (`-f`) no longer attempts to write to `/tmp/matrix_fps.log`.  

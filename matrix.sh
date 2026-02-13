@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Matrix CLI - Matrix-like console animation
-# Version: 0.3.2
+# Version: 0.3.3
 # Author: diserere
 # GitHub: https://github.com/diserere/matrix_cli
 
@@ -9,21 +9,22 @@
 
 
 # Version info
-VERSION="0.3.2"
+VERSION="0.3.3"
 AUTHOR="diserere"
 REPO_URL="https://github.com/diserere/matrix_cli"
 
 # Конфигурация по умолчанию
-DELAY=0                 # Задержка по умолчанию
-DEFAULT_COLUMNS_STEP=3  # Шаг колонок по умолчанию
-FPS_MAX_FRAMES=500      # Количество кадров для бенчмарка FPS
+DELAY=0                         # Задержка по умолчанию
+DEFAULT_COLUMNS_STEP=3          # Шаг колонок по умолчанию
+DEFAULT_FPS_MAX_FRAMES=500      # Количество кадров для замера FPS по умолчанию
 
 UPDATE_URL="https://raw.githubusercontent.com/diserere/matrix_cli/refs/heads/master/matrix.sh"
 
 
 # ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И КОНСТАНТЫ
 
-COLUMNS_STEP=$DEFAULT_COLUMNS_STEP  # Глобальная переменная для шага колонок
+COLUMNS_STEP=${DEFAULT_COLUMNS_STEP}        # Глобальная переменная для шага колонок
+FPS_MAX_FRAMES=${DEFAULT_FPS_MAX_FRAMES}    # Количество кадров для замера FPS
 
 # Массивы для хранения данных колонок
 declare -a positions
@@ -196,8 +197,18 @@ parse_args() {
                 shift
                 ;;
             -f|--fps)
+                check_dependencies "bc"
                 TEST_FPS=1
                 shift
+                ;;
+            --max-frames)
+                if [[ -n "$2" && "$2" =~ ^[0-9]+$ && "$2" -gt 0 ]]; then
+                    FPS_MAX_FRAMES="$2"
+                    shift 2
+                else
+                    echo "Ошибка: --max-frames требует целочисленного значения > 0" >&2
+                    exit 1
+                fi
                 ;;
             -d|--delay)
                 if [[ -n "$2" && "$2" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
@@ -251,20 +262,21 @@ show_help() {
 Использование: $0 [опции]
 
 Опции:
-  -b, --binary        Использовать двоичные символы (0 и 1)
-  -e, --erase         Включить стирание хвоста колонок
-  -g, --grayscale     Использовать оттенки серого вместо зеленого
-  -t, --test          Вывод тестовой таблицы цветов
-  -f, --fps           Тест производительности FPS
-  -d, --delay FLOAT   Задержка (сек) при выводе буфера кадра (по умолчанию ${DELAY})
-  -s, --step INT      Шаг колонок анимации (по умолчанию ${DEFAULT_COLUMNS_STEP})
-                        Минимальное значение: 1
-  -v, --version       Показать информацию о версии
-  -u, --update        Обновить до последней версии из GitHub репозитория
-  -h, --help          Показать эту справку
+    -b, --binary        Использовать двоичные символы (0 и 1)
+    -e, --erase         Включить стирание хвоста колонок
+    -g, --grayscale     Использовать оттенки серого вместо зеленого
+    -t, --test          Вывод тестовой таблицы цветов
+    -f, --fps           Тест производительности FPS
+        --max-frames    Количество кадров для замера FPS (по умолчанию ${DEFAULT_FPS_MAX_FRAMES})
+    -d, --delay FLOAT   Задержка (сек) при выводе кадра (по умолчанию ${DELAY})
+    -s, --step INT      Шаг колонок анимации (по умолчанию ${DEFAULT_COLUMNS_STEP})
+                          Минимальное значение: 1
+    -v, --version       Показать информацию о версии
+    -u, --update        Обновить до последней версии из GitHub репозитория
+    -h, --help          Показать эту справку
 
 Управление:
-  Ctrl+C              Выход
+    Ctrl+C              Выход
 EOF
 }
 
@@ -458,24 +470,27 @@ do_matrix() {
                 local frame_end_time=$(date +%s%N)
                 local elapsed_ns=$((frame_end_time - frame_start_time))
                 local elapsed_ms=$((elapsed_ns / 1000000))
-                local fps=$((50000 / (elapsed_ms + 1)))  # FPS за 50 кадров
+                local fps=$(echo "scale=1; 50000 / ${elapsed_ms}" | bc)
                 # Сохраняем в лог
-                FPS_LOG+="Frame: $((frame_count - 50))-${frame_count}\t${elapsed_ms}ms \tFPS: ${fps}"$'\n'
+                FPS_LOG+="Frame: $((frame_count - 50))-${frame_count}\t${elapsed_ms}ms\t\tFPS: ${fps}"$'\n'
             fi
 
             # Выводим FPS в углу экрана
-            if (( fps > 0 )); then
-                tput cup 0 0 2>/dev/null
+            tput cup 0 0 2>/dev/null
+            echo -ne "${COLOR_STRINGS[0]}${frame_count}/${FPS_MAX_FRAMES} frames "
+            if [[ -n ${fps} ]]; then
+                tput cup 1 0 2>/dev/null
                 echo -ne "${COLOR_STRINGS[0]}${fps} fps "
             fi
 
             # Автоматическое завершение после FPS_MAX_FRAMES кадров
             if (( frame_count >= FPS_MAX_FRAMES )); then
                 local total_time=$((SECONDS - start_time))
+                average_fps=$(echo "scale=1; ${FPS_MAX_FRAMES} / $((total_time > 0 ? total_time : 1))" | bc)
                 FPS_LOG+="----------------------------------------"$'\n'
                 FPS_LOG+="Total frames:\t${FPS_MAX_FRAMES}"$'\n'
                 FPS_LOG+="Total time:\t${total_time}s"$'\n'
-                FPS_LOG+="Average FPS:\t$((FPS_MAX_FRAMES / (total_time > 0 ? total_time : 1)))"$'\n'
+                FPS_LOG+="Average FPS:\t${average_fps}"$'\n'
                 cleanup
             fi
         fi

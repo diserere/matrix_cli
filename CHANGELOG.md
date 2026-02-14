@@ -1,107 +1,119 @@
 # Changelog
 
-All notable changes to the Matrix CLI project will be documented in this file.
+Все значимые изменения проекта Matrix CLI будут задокументированы в этом файле.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.0.0/).
 
 ## [Unreleased]
 
-#### Planned
-- Add terminal resize handling
+#### Запланировано
+- Добавить обработку изменения размера терминала
+
+## [0.3.3] (2026-02-14)
+### Улучшение теста FPS
+
+#### Добавлено
+- **Гибкий FPS-тест**: Новый параметр `--max-frames INT` для установки произвольного количества кадров при замере производительности (по умолчанию — 500). Работает только вместе с флагом `-f`.
+- **Номер кадра в тесте FPS**: Вывод текущего кадра и их общего количества при тесте FPS (вида `1/500 frames`). Теперь видно, сколько прошло, и сколько осталось.
+- **Проверка зависимостей**: Для режима `-f` теперь требуется `bc` (калькулятор для точного расчёта FPS).
+
+#### Изменено
+- **Улучшение подсчета FPS**: При подсчете FPS теперь используется арифметика с плавающей точкой (вместо целочисленной). Теперь значения FPS считаются гораздо точнее.
+- **Русский CHANGELOG**: CHANGELOG переведен на русский язык, и будет в дальнейшем вестить на русском языке.
 
 ## [0.3.2] (2026-02-13)
-### Keep benchmark log in memory
+### Хранение лога FPS в памяти
 
-#### Fixed
-- **Android compatibility**: FPS benchmark mode (`-f`) no longer attempts to write to `/tmp/matrix_fps.log`.  
-  Log is now stored in memory, fixing "Read-only file system" errors on Android and other restricted environments.
-- **macOS compatibility**: Fixed time calculation in FPS benchmark on macOS (compatibility with `date` command).
-- **Help text**: Removed obsolete reference to log file in `--fps` option description.
+#### Исправлено
+- **Совместимость с Android**: Режим замера FPS (`-f`) больше не пытается писать в `/tmp/matrix_fps.log`. Лог хранится в памяти, что устраняет ошибки «Read-only file system» на Android и других системах с ограниченной записью в ФС.
+- **Совместимость с macOS**: Исправлен расчёт времени в FPS-тесте для macOS (совместимость с командой `date`).
+- **Текст справки**: Убрано устаревшее упоминание файла лога в описании опции `--fps`.
 
-#### Changed
-- **Internal**: FPS log storage moved from filesystem to global variable `FPS_LOG` for better cross-platform support.
-- **Code clarity**: Removed unused `FPS_LOG_FILE` variable and related filesystem operations.
+#### Изменено
+- **Внутренняя архитектура**: Хранение FPS-лога перенесено из файловой системы в глобальную переменную `FPS_LOG` для лучшей кроссплатформенности.
+- **Чистота кода**: Удалена неиспользуемая переменная `FPS_LOG_FILE` и связанные с ней операции.
 
-#### Removed
-- **Dependency**: Script no longer requires write permission to `/tmp` directory.
+#### Удалено
+- **Зависимость**: Скрипт больше не требует прав на запись в каталог `/tmp`.
 
 ## [0.3.1] (2026-02-13)
-### Bug fix release
+### Выпуск с исправлением ошибок
 
-#### Changed
-- **Shortened long name**: Long name for `-s, --columns-step` option have been shortened to `--step`.
-- **Error reporting**: All error messages are sent to STDERR now.
+#### Изменено
+- **Сокращение длинного имени**: Длинное имя опции `-s, --columns-step` сокращено до `--step`.
+- **Вывод ошибок**: Все сообщения об ошибках теперь направляются в STDERR.
 
-#### Added
-- **Param validation**: Validate that value for `--step` option is not only an integer but also greater than 0 to prevent break animation loop.
-- **Improved output**: Run `curl` tool in non-silent mode while updating from repo.
+#### Добавлено
+- **Валидация параметров**: Добавлена проверка, что значение для `--step` является не только целым числом, но и больше 0 (чтобы не сломать цикл анимации).
+- **Улучшенный вывод**: Утилита `curl` при обновлении из репозитория теперь работает в non-silent режиме.
 
-#### Fixed
-- **Help and service messages improvement**: Some changes for `--help` and `--update` options to make its output clearer.
-- Code formatting
+#### Исправлено
+- **Улучшение служебных сообщений**: Внесены изменения в тексты для опций `--help` и `--update`, чтобы сделать их понятнее.
+- **Форматирование кода**.
 
 ## [0.3.0] (2026-02-12)
-### Add columns-step option
+### Добавлена опция шага колонок
 
-#### Added
-- **Performance control**: New `-s, --columns-step INT` flag to control column update step.
-  - Allows trading visual density for speed.
-  - Step value is now configurable and logged in FPS benchmark mode (`-f`).
+#### Добавлено
+- **Управление производительностью**: Новый флаг `-s, --columns-step INT` для управления шагом вывода колонок.
+  - Позволяет управлять визуальным эффектом, и находить компромисс между плотностью анимации и скоростью.
+  - Значение шага теперь можно менять, и оно логируется в режиме замера FPS (`-f`).
 
-#### Fixed
-- **Actual default step mismatch**: Previously, the `columns_step` variable defaulted to `1`, but the init loop hardcoded `i+=3`. This caused to any changes to step value were ignored.
-  - **Effect**: Default behavior remains the same (step = 3), but now it's properly controlled by the `COLUMNS_STEP` variable and the new `-s` flag.
-- **Help text improvement**: Default values are clearly stated in the help text for `--delay` and `--columns-step` flags.
-- **Error text typo**: Corrected error message for `--delay` flag (previously referred to `--speed`).
+#### Исправлено
+- **Несоответствие шага по умолчанию**: Ранее переменная `columns_step` по умолчанию была равна `1`, но в цикле инициализации было жёстко прописано `i+=3`. Из-за этого любые изменения шага игнорировались.
+  - **Результат**: Поведение по умолчанию осталось тем же (шаг = 3), но теперь оно корректно управляется переменной `COLUMNS_STEP` и новым флагом `-s`.
+- **Улучшение справки**: Значения по умолчанию теперь явно указаны в тексте справки для флагов `--delay` и `--columns-step`.
+- **Опечатка**: Исправлено сообщение об ошибке для флага `--delay` (ранее ошибочно упоминался `--speed`).
 
-#### Changed
-- **Default delay**: Explicitly set to `0` in code (behavior unchanged).
+#### Изменено
+- **Задержка по умолчанию**: В коде явно установлена задержка `0` (поведение не изменилось).
 
 ## [0.2.1] (2026-02-09)
-### Bug fix release
+### Выпуск с исправлением ошибок
 
-#### Fixed
-- **Peformance fix**: Small improvenemt in line buffer string concatenation
-- **Color palette**: Most bright green color changed to better match color palette
-- **README**: Small fixes in README
-- **CHANGELOG**: Improve CHANGELOG formatting
+#### Исправлено
+- **Оптимизация**: Небольшое улучшение при конкатенации строк в буфере.
+- **Цветовая палитра**: Самый яркий зелёный цвет изменён для лучшего соответствия палитре.
+- **README**: Небольшие исправления.
+- **CHANGELOG**: Улучшено форматирование.
 
 ## [0.2.0] (2026-02-08)
 
-#### Performance
-- **Major rendering refactor**: Replaced per-character refresh with buffered output
-- **10-30x speed improvement**: Achieved ~25 FPS at 80×24 and ~5 FPS at 238×65 resolution (Gnome terminal in full-screen mode on FullHD display)
+#### Производительность
+- **Масштабный рефакторинг рендеринга**: Замена посимвольного обновления на буферизированный вывод.
+- **Ускорение в 10–30 раз**: Достигнуто ~25 FPS при разрешении 80×24 и ~5 FPS при 238×65 (терминал Gnome в полноэкранном режиме на FullHD-дисплее).
 
-#### Added
-- **FPS benchmarking mode**: `-f, --fps` flag for performance testing
-- **Frame delay control**: `-d, --delay` flag for smoother animation on high refresh rates
-- **Real-time FPS display**: Shows current frame rate in corner during benchmark
-- **Auto-benchmark**: Automatically runs 500 frames and outputs detailed performance log
+#### Добавлено
+- **Режим замера FPS**: Флаг `-f, --fps` для тестирования производительности.
+- **Управление задержкой кадра**: Флаг `-d, --delay` для более плавной анимации на высоких частотах обновления.
+- **Отображение FPS в реальном времени**: Показывает текущую частоту кадров в углу экрана во время замера.
+- **Авто-бенчмарк**: Автоматически запускает 500 кадров и выводит подробный лог производительности.
 
 ## [0.1.2] (2026-02-07)
 
-#### Added
-- Update option with `-u, --update` flag
+#### Добавлено
+- Опция обновления с флагом `-u, --update`.
 
 ## [0.1.1] (2026-02-07)
 
-#### Added
-  - Version info with `-v, --version` flag
-  - Cross-platform support tested (Linux, macOS, Android)
-  - CHANGELOG.md following Keep a Changelog
+#### Добавлено
+  - Информация о версии с флагом `-v, --version`.
+  - Поддержка кроссплатформенности протестирована (Linux, macOS, Android).
+  - Файл `CHANGELOG.md`, следующий формату Keep a Changelog.
 
 ## [0.1.0] (2026-02-05)
 
-#### Added
-  - Initial release of Matrix CLI
-  - Basic digital rain animation
-  - Two-color (green/grayscale) scheme with `-g, -grayscale` flag
-  - Two symbol set (full/0,1-only) modes with `-b, --binary` flag
-  - Erasing slow column traces mode with `-e, --erase` flag  
-  - Test color palette mode with `-t, --test` flag
-  - Help text with `-h, --help` flag
+#### Добавлено
+  - Начальный релиз Matrix CLI.
+  - Базовая анимация цифрового дождя.
+  - Две цветовые схемы (зелёный/оттенки серого) с флагом `-g, --grayscale`.
+  - Два набора символов (полный/только 0 и 1) с флагом `-b, --binary`.
+  - Режим стирания хвостов колонок с флагом `-e, --erase`.
+  - Режим тестирования цветовой палитры с флагом `-t, --test`.
+  - Текст справки с флагом `-h, --help`.
 
-[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/diserere/matrix_cli/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.3
 [0.3.2]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.2
 [0.3.1]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.1
 [0.3.0]: https://github.com/diserere/matrix_cli/releases/tag/v0.3.0

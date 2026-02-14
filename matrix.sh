@@ -262,19 +262,19 @@ show_help() {
 Использование: $0 [опции]
 
 Опции:
-    -b, --binary        Использовать двоичные символы (0 и 1)
-    -e, --erase         Включить стирание хвоста колонок
-    -g, --grayscale     Использовать оттенки серого вместо зеленого
-    -t, --test          Вывод тестовой таблицы цветов
-    -f, --fps           Тест производительности FPS
-        --max-frames    Количество кадров для замера FPS (по умолчанию ${DEFAULT_FPS_MAX_FRAMES})
-                          Минимальное значение: 1
-    -d, --delay FLOAT   Задержка (сек) при выводе кадра (по умолчанию ${DELAY})
-    -s, --step INT      Шаг колонок анимации (по умолчанию ${DEFAULT_COLUMNS_STEP})
-                          Минимальное значение: 1
-    -v, --version       Показать информацию о версии
-    -u, --update        Обновить до последней версии из GitHub репозитория
-    -h, --help          Показать эту справку
+    -b, --binary            Использовать двоичные символы (0 и 1)
+    -e, --erase             Включить стирание хвоста колонок
+    -g, --grayscale         Использовать оттенки серого вместо зеленого
+    -t, --test              Вывод тестовой таблицы цветов
+    -f, --fps               Тест производительности FPS
+        --max-frames INT    Количество кадров для замера FPS (по умолчанию ${DEFAULT_FPS_MAX_FRAMES})
+                              Минимальное значение: 1
+    -d, --delay FLOAT       Задержка (сек) при выводе кадра (по умолчанию ${DELAY})
+    -s, --step INT          Шаг колонок анимации (по умолчанию ${DEFAULT_COLUMNS_STEP})
+                              Минимальное значение: 1
+    -v, --version           Показать информацию о версии
+    -u, --update            Обновить до последней версии из GitHub репозитория
+    -h, --help              Показать эту справку
 
 Управление:
     Ctrl+C              Выход
@@ -347,12 +347,13 @@ do_matrix() {
     if (( TEST_FPS == 1 )); then
         local frame_count=0
         local start_time=$SECONDS
+        local FPS_LOG_DELIM="------------------------------------------"
 
         FPS_LOG="Matrix CLI Performance Test"$'\n'
         FPS_LOG+="Screen: ${width}x${height}, Step: ${columns_step}"$'\n'
         FPS_LOG+="Buffer size: $buffer_size cells"$'\n'
         FPS_LOG+="Delay: ${DELAY}s"$'\n'
-        FPS_LOG+="----------------------------------------"$'\n'
+        FPS_LOG+="${FPS_LOG_DELIM}"$'\n'
     fi
 
     # --- ГЛАВНЫЙ ЦИКЛ АНИМАЦИИ ---
@@ -488,7 +489,7 @@ do_matrix() {
             if (( frame_count >= FPS_MAX_FRAMES )); then
                 local total_time=$((SECONDS - start_time))
                 average_fps=$(echo "scale=1; ${FPS_MAX_FRAMES} / $((total_time > 0 ? total_time : 1))" | bc)
-                FPS_LOG+="----------------------------------------"$'\n'
+                FPS_LOG+="${FPS_LOG_DELIM}"$'\n'
                 FPS_LOG+="Total frames:\t${FPS_MAX_FRAMES}"$'\n'
                 FPS_LOG+="Total time:\t${total_time}s"$'\n'
                 FPS_LOG+="Average FPS:\t${average_fps}"$'\n'

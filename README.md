@@ -2,7 +2,7 @@ Matrix Console Animation
 ---
 Bash-скрипт, имитирующий визуализацию из фильма "Матрица" в терминале.
 
-[![Version](https://img.shields.io/badge/version-0.2.1-green.svg)](https://github.com/diserere/matrix_cli/releases)
+[![Version](https://img.shields.io/badge/version-0.3.3-green.svg)](https://github.com/diserere/matrix_cli/releases)
 
 
 ![Matrix Demo](images/animated_matrix_green_v0.2.0_600px.gif)
@@ -69,6 +69,7 @@ chmod +x matrix.sh
 | `--grayscale` | `-g` | Использовать оттенки серого вместо зелёного |
 | `--test` | `-t` | Показать тестовую таблицу цветов и выйти |
 | `--fps` | `-f` | Тест производительности FPS |
+| `--max-frames INT` |  | Количество кадров для замера FPS, по умолчанию 500 |
 | `--delay FLOAT` | `-d FLOAT` | Задержка в сек. при выводе буфера кадра, по умолчанию 0 |
 | `--step INT` | `-s INT` | Шаг колонок анимации, по умолчанию 3, минимум 1 |
 | `--help` | `-h` | Показать справку по использованию |
@@ -129,8 +130,11 @@ chmod +x matrix.sh
 ### Классический зелёный режим
 ![Зелёный Matrix](images/animated_matrix_green_v0.2.0_600px.gif)
 
-### Двоичный режим (0 и 1), grayscale
-![Двоичный Matrix](images/animated_matrix_gray_v0.2.0_600px.gif)
+### Двоичный режим (0 и 1), grayscale, шаг 2
+![Двоичный Matrix](images/animated_matrix_grayscale_binary_s2_v0.3.3_600px.gif)
+
+### Тест производительности FPS
+![Бенчмарк FPS](images/animated_matrix_test_fps_v0.3.3_600px.gif)
 
 
 ### Примеры режимов
@@ -154,15 +158,15 @@ chmod +x matrix.sh
 
 ![matrix_color_test_600px.png](images/matrix_color_test_600px.png)
 
-- `matrix.sh --fps --b -e -d 0.01`
+- `./matrix.sh --step 2 --binary --fps --max-frames 200 --delay 0`
 
-![matrix_test_fps_1_600px.png](images/matrix_test_fps_1_600px.png)
+![matrix_test_fps_1_v0.3.3_600px.png](images/matrix_test_fps_1_v0.3.3_600px.png)
 
-![matrix_test_fps_2_600px.png](images/matrix_test_fps_2_600px.png)
+![matrix_test_fps_2_v0.3.3_600px.png](images/matrix_test_fps_2_v0.3.3_600px.png)
 
 - `matrix.sh --help`
 
-![matrix_help_600px.png](images/matrix_help_600px.png)
+![matrix_help_v0.3.3_600px.png](images/matrix_help_v0.3.3_600px.png)
 
 - `matrix.sh --version`
 
